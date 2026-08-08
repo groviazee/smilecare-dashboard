@@ -883,7 +883,14 @@ function Dashboard({ config, session, userEmail, onLogout, supabase }) {
     const webhook = data.clinicSettings?.reminder_resend_webhook_url;
     if (!webhook) { setConnectError("Add a reminder-resend webhook URL in Settings first (points at your n8n workflow's webhook trigger)."); return; }
     try {
-      await fetch(webhook, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ patient_phone: e.patient_phone, execution_error_id: e.id }) });
+      // The n8n webhook requires a shared-secret header (see README /
+      // PRODUCTION_REPORT for the value) — anyone with just the URL can't
+      // trigger it without this header.
+      await fetch(webhook, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Webhook-Secret": "WiJy6NcfCdVs3N-uOC4Jugilk6wqS4_E_hshC-uquB8" },
+        body: JSON.stringify({ patient_phone: e.patient_phone, execution_error_id: e.id }),
+      });
       logAudit("resent_reminder", `${e.patient_phone || "—"}`);
       resolveError(e);
     } catch (err) { setConnectError(`Could not reach the resend webhook: ${err.message}`); }

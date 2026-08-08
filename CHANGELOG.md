@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-08 — Reminder-resend webhook
+- feat(n8n): created and activated "Resend Reminder (Dashboard Webhook)" — the URL the dashboard's
+  Alerts tab needs for `reminder_resend_webhook_url`. Looks up the patient's next upcoming
+  confirmed booking by phone, sends the WhatsApp reminder, logs to `reminders_sent`.
+- security(n8n): added header-auth (`X-Webhook-Secret`) to that webhook so it can't be triggered
+  by anyone who finds the URL. Matching secret hardcoded into `resendReminder()` in `src/App.jsx`.
+
 ## 2026-08-08 — Security & robustness pass
 - fix(auth): `myRole` no longer fails open to `"owner"` on a failed or empty `staff_accounts`
   fetch; added `"unknown"` and `"unprovisioned"` states with a dedicated no-access screen.

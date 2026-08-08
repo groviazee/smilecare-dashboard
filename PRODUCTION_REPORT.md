@@ -53,5 +53,27 @@ for the repo and for spinning up a fresh dev/staging project later.
   migration file with the exact commands.
 
 ## Not touched at all
-GitHub push, Vercel deploy, and applying anything to your live Supabase project — see the message
-alongside this report for why, and what I need from you to do each one.
+GitHub push and Vercel deploy — see the message alongside this report for why, and what I need
+from you to do each one.
+
+## n8n: "Resend Reminder" webhook
+The dashboard's Alerts tab "resend reminder" button POSTs `{patient_phone, execution_error_id}`
+to `clinic_settings.reminder_resend_webhook_url`. That workflow didn't exist (the previously-live
+"Reminder Engine" workflow is a scheduled batch job with no HTTP trigger), so a new one was built:
+**Resend Reminder (Dashboard Webhook)**, activated at
+`https://yashwantkumar1642025.app.n8n.cloud/webhook/resend-reminder`. It looks up the patient's
+next upcoming confirmed booking, sends the WhatsApp reminder, and logs to `reminders_sent`.
+
+It's protected by a shared-secret header (`X-Webhook-Secret`) using n8n's existing "Header Auth
+account" credential — **you still need to open that credential in n8n and set Name=
+`X-Webhook-Secret`, Value = the token below**, or the webhook will reject every request with 403:
+
+```
+WiJy6NcfCdVs3N-uOC4Jugilk6wqS4_E_hshC-uquB8
+```
+
+This value is already hardcoded into `resendReminder()` in `src/App.jsx` to match. It's visible in
+the shipped browser bundle (unavoidable for a pure-frontend app calling a webhook directly) — it
+stops randoms from finding the URL and spamming WhatsApp sends, not a determined attacker with
+devtools access to your own staff's browser. Rotate it in both places if that's ever a concern.
+

@@ -200,7 +200,29 @@ function buildDemoData() {
     { id: 1, patient_name: "Deepak Nair", patient_phone: "+919876500020", patient_email: "", reason_for_visit: "Cleaning", dentist_name: "Dr. Sharma", preferred_start: fromToday(0, 9, 30), preferred_end: fromToday(0, 10, 0), status: "pending", created_at: fromToday(0, 8, 0) },
   ];
 
-  return { dentists, bookings, patients, escalations, executionErrors, failedBookingAttempts, reviewTracking, aiCostTracking, clinicSettings, conversationLogs, faqMisses, documents, auditLog, inboundContacts, waitlist, adminAlerts };
+  // Phase 9 — activity logs written by the bot but previously invisible in
+  // the dashboard: cancellations, reschedules, reminders sent, and raw
+  // webhook/system errors.
+  const cancellationLogs = [
+    { id: 1, booking_id: "BK-DEMO09", patient_phone: "+919876500001", cancellation_reason: "Patient has a scheduling conflict.", cancelled_at: fromToday(-2, 10, 15), cancelled_by: "patient_whatsapp" },
+  ];
+
+  const rescheduleLogs = [
+    { id: 1, booking_id: "BK-DEMO04", old_start_time: fromToday(-1, 12, 0), old_end_time: fromToday(-1, 12, 30), new_start_time: fromToday(0, 15, 0), new_end_time: fromToday(0, 15, 30), rescheduled_at: fromToday(-1, 17, 2), rescheduled_by: "patient_whatsapp" },
+  ];
+
+  const remindersSent = [
+    { id: 1, event_id: "BK-DEMO02", patient_phone: "+919876500002", reminder_type: "24h", sent_at: fromToday(-1, 10, 30) },
+    { id: 2, event_id: "BK-DEMO04", patient_phone: "+919876500004", reminder_type: "2h", sent_at: fromToday(0, 13, 0) },
+  ];
+
+  const webhookErrors = [
+    { id: 1, workflow_id: "luUZo46f8hHMoQbm", error_type: "invalid_payload", error_message: "WhatsApp webhook payload missing expected 'messages' field.", timestamp: fromToday(-2, 6, 45) },
+  ];
+
+  const errorLog = [];
+
+  return { dentists, bookings, patients, escalations, executionErrors, failedBookingAttempts, reviewTracking, aiCostTracking, clinicSettings, conversationLogs, faqMisses, documents, auditLog, inboundContacts, waitlist, adminAlerts, cancellationLogs, rescheduleLogs, remindersSent, webhookErrors, errorLog };
 }
 
 /* ============================== data client (REST, using the signed-in user's token) ============================== */
@@ -615,8 +637,15 @@ function Dashboard({ config, session, userEmail, onLogout, supabase }) {
         client.select("waitlist_entries", "select=*&status=eq.pending&order=created_at.asc"),
         // Phase 8 — clinic-wide alerts from the n8n notify sub-workflow
         client.select("admin_alerts", "select=*&resolved=eq.false&order=created_at.desc"),
+        // Phase 9 — activity logs written by the bot (cancellations, reschedules,
+        // reminders sent, raw webhook/system errors) that weren't shown anywhere before.
+        client.select("cancellation_logs", "select=*&order=cancelled_at.desc&limit=100"),
+        client.select("reschedule_logs", "select=*&order=rescheduled_at.desc&limit=100"),
+        client.select("reminders_sent", "select=*&order=sent_at.desc&limit=100"),
+        client.select("webhook_errors", "select=*&order=timestamp.desc&limit=50"),
+        client.select("error_log", "select=*&order=timestamp.desc&limit=50"),
       ]);
-      const [bookings, patients, escalations, executionErrors, failedBookingAttempts, reviewTracking, aiCostTracking, clinicSettingsArr, faqMisses, documents, auditLog, dentists, staffAccountRows, inboundContacts, waitlist, adminAlerts] =
+      const [bookings, patients, escalations, executionErrors, failedBookingAttempts, reviewTracking, aiCostTracking, clinicSettingsArr, faqMisses, documents, auditLog, dentists, staffAccountRows, inboundContacts, waitlist, adminAlerts, cancellationLogs, rescheduleLogs, remindersSent, webhookErrors, errorLog] =
         results.map((r) => (r.status === "fulfilled" ? r.value : []));
 
       // Security fix: this used to default to "owner" (full access) whenever
@@ -651,6 +680,11 @@ function Dashboard({ config, session, userEmail, onLogout, supabase }) {
         inboundContacts: inboundContacts || [],
         waitlist: waitlist || [],
         adminAlerts: adminAlerts || [],
+        cancellationLogs: cancellationLogs || [],
+        rescheduleLogs: rescheduleLogs || [],
+        remindersSent: remindersSent || [],
+        webhookErrors: webhookErrors || [],
+        errorLog: errorLog || [],
       }));
       setUsingDemoData(false);
 
@@ -1192,6 +1226,9 @@ function Dashboard({ config, session, userEmail, onLogout, supabase }) {
               resolveEscalation={resolveEscalation} resolveError={resolveError}
               onViewConversation={setConversationPhone} onResendReminder={resendReminder}
               settings={data.clinicSettings}
+              cancellationLogs={data.cancellationLogs || []} rescheduleLogs={data.rescheduleLogs || []}
+              remindersSent={data.remindersSent || []} webhookErrors={data.webhookErrors || []}
+              errorLog={data.errorLog || []}
             />
           </>
         )}
@@ -1811,14 +1848,29 @@ function PatientsTab({ patients, bookings, escalations, reviewTracking, expanded
 
 /* ============================== Alerts Tab ============================== */
 
-function AlertsTab({ escalations, executionErrors, failedBookingAttempts, faqMisses, adminAlerts = [], resolveAdminAlert, isOwner, resolveEscalation, resolveError, onViewConversation, onResendReminder, settings }) {
+function AlertsTab({ escalations, executionErrors, failedBookingAttempts, faqMisses, adminAlerts = [], resolveAdminAlert, isOwner, resolveEscalation, resolveError, onViewConversation, onResendReminder, settings, cancellationLogs = [], rescheduleLogs = [], remindersSent = [], webhookErrors = [], errorLog = [] }) {
   const locale = settings?.locale;
   const [warningsOpen, setWarningsOpen] = useState(false);
+  const [bookingChangesOpen, setBookingChangesOpen] = useState(false);
+  const [remindersOpen, setRemindersOpen] = useState(false);
+  const [rawErrorsOpen, setRawErrorsOpen] = useState(false);
   const critical = executionErrors.filter((e) => e.severity !== "warning");
   const warnings = executionErrors.filter((e) => e.severity === "warning");
   const SLA_MINUTES = 30;
   const sortedEscalations = [...escalations].sort((a, b) => new Date(a.escalated_at) - new Date(b.escalated_at));
   const sortedAdminAlerts = [...adminAlerts].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+  // Phase 9 — cancellations + reschedules merged into one time-sorted feed,
+  // reminders sent, and raw webhook/system errors merged into one feed too.
+  const bookingChanges = [
+    ...cancellationLogs.map((c) => ({ ...c, _kind: "cancelled", _at: c.cancelled_at })),
+    ...rescheduleLogs.map((r) => ({ ...r, _kind: "rescheduled", _at: r.rescheduled_at })),
+  ].sort((a, b) => new Date(b._at) - new Date(a._at));
+  const sortedReminders = [...remindersSent].sort((a, b) => new Date(b.sent_at) - new Date(a.sent_at));
+  const rawErrors = [
+    ...webhookErrors.map((e) => ({ ...e, _source: "webhook" })),
+    ...errorLog.map((e) => ({ ...e, _source: "log", error_message: e.error_message, timestamp: e.timestamp })),
+  ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
   return (
     <div className="space-y-4">
@@ -1903,6 +1955,71 @@ function AlertsTab({ escalations, executionErrors, failedBookingAttempts, faqMis
           </Card>
         ))}
         {faqMisses.length > 0 && <p className="text-[11px] text-stone-400 px-0.5">Add answers to these in Settings → Knowledge base, then re-sync in n8n.</p>}
+      </Section>
+
+      <Section title="Booking changes" count={bookingChanges.length} icon={CalendarClock}>
+        {bookingChanges.length === 0 && <EmptyState icon={CircleCheck} text="No cancellations or reschedules logged." />}
+        {(bookingChangesOpen ? bookingChanges : bookingChanges.slice(0, 8)).map((c, i) => (
+          <Card key={`${c._kind}-${c.id ?? i}`} className="p-3">
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${c._kind === "cancelled" ? "bg-red-50 text-red-700 border border-red-200" : "bg-amber-50 text-amber-700 border border-amber-200"}`}>
+                {c._kind === "cancelled" ? "Cancelled" : "Rescheduled"}
+              </span>
+              <span className="text-xs text-stone-400">{c.booking_id}</span>
+            </div>
+            {c._kind === "cancelled" ? (
+              <p className="text-sm text-stone-600">{c.cancellation_reason || "No reason given."}</p>
+            ) : (
+              <p className="text-sm text-stone-600">
+                {fmtDateShort(c.old_start_time, locale)} {fmtTime(c.old_start_time, locale)} → {fmtDateShort(c.new_start_time, locale)} {fmtTime(c.new_start_time, locale)}
+              </p>
+            )}
+            <p className="text-[11px] text-stone-400 mt-1">{c.patient_phone || ""} {(c.cancelled_by || c.rescheduled_by) && `· by ${c.cancelled_by || c.rescheduled_by}`} · {fmtDateShort(c._at, locale)} {fmtTime(c._at, locale)}</p>
+          </Card>
+        ))}
+        {bookingChanges.length > 8 && (
+          <button onClick={() => setBookingChangesOpen((v) => !v)} className="flex items-center gap-1 text-xs text-stone-500 font-medium px-1">
+            {bookingChangesOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />} {bookingChangesOpen ? "Show less" : `Show all ${bookingChanges.length}`}
+          </button>
+        )}
+      </Section>
+
+      <Section title="Reminders sent" count={sortedReminders.length} icon={Send}>
+        {sortedReminders.length === 0 && <EmptyState icon={CircleCheck} text="No reminders sent yet." />}
+        {(remindersOpen ? sortedReminders : sortedReminders.slice(0, 8)).map((r, i) => (
+          <Card key={r.id ?? i} className="p-3 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">{r.event_id} <span className="text-stone-400 font-normal">· {r.patient_phone}</span></p>
+              <p className="text-[11px] text-stone-400 mt-1">{fmtDateShort(r.sent_at, locale)} {fmtTime(r.sent_at, locale)}</p>
+            </div>
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200 flex-shrink-0">{r.reminder_type}</span>
+          </Card>
+        ))}
+        {sortedReminders.length > 8 && (
+          <button onClick={() => setRemindersOpen((v) => !v)} className="flex items-center gap-1 text-xs text-stone-500 font-medium px-1">
+            {remindersOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />} {remindersOpen ? "Show less" : `Show all ${sortedReminders.length}`}
+          </button>
+        )}
+      </Section>
+
+      <Section title="Webhook & system errors (raw)" count={rawErrors.length} icon={AlertTriangle}>
+        {rawErrors.length === 0 && <EmptyState icon={CircleCheck} text="No raw webhook or logging errors." />}
+        {(rawErrorsOpen ? rawErrors : rawErrors.slice(0, 8)).map((e, i) => (
+          <Card key={`${e._source}-${e.id ?? i}`} className="p-3">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-stone-100 text-stone-600 border border-stone-200">
+                {e._source === "webhook" ? (e.error_type || "webhook") : (e.workflow || "log")}
+              </span>
+            </div>
+            <p className="text-sm text-stone-600">{e.error_message}</p>
+            <p className="text-[11px] text-stone-400 mt-1">{fmtDateShort(e.timestamp, locale)} {fmtTime(e.timestamp, locale)}</p>
+          </Card>
+        ))}
+        {rawErrors.length > 8 && (
+          <button onClick={() => setRawErrorsOpen((v) => !v)} className="flex items-center gap-1 text-xs text-stone-500 font-medium px-1">
+            {rawErrorsOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />} {rawErrorsOpen ? "Show less" : `Show all ${rawErrors.length}`}
+          </button>
+        )}
       </Section>
     </div>
   );

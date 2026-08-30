@@ -830,6 +830,20 @@ function Dashboard({ config, session, userEmail, onLogout, supabase }) {
     }
   }
 
+  async function setBookingPaymentMethod(booking, paymentMethod) {
+    const value = ["cash", "card", "upi"].includes(paymentMethod) ? paymentMethod : null;
+    const previous = booking.payment_method;
+    setData((d) => ({ ...d, bookings: d.bookings.map((b) => (b.booking_id === booking.booking_id ? { ...b, payment_method: value } : b)) }));
+    logAudit("set_payment_method", `${booking.booking_id} · ${booking.patient_name} → ${value ?? "cleared"}`);
+    if (client) {
+      try { await client.update("booking_records", `booking_id=eq.${booking.booking_id}`, { payment_method: value }); }
+      catch (e) {
+        setData((d) => ({ ...d, bookings: d.bookings.map((b) => (b.booking_id === booking.booking_id ? { ...b, payment_method: previous } : b)) }));
+        setConnectError(`Payment method was not saved, reverted: ${e.message}`);
+      }
+    }
+  }
+
   async function rescheduleBooking(booking, start, end) {
     const previousStart = booking.appointment_start;
     const previousEnd = booking.appointment_end;
@@ -1195,6 +1209,7 @@ function Dashboard({ config, session, userEmail, onLogout, supabase }) {
             onReschedule={rescheduleBooking} onCancel={cancelBooking}
             onViewConversation={setConversationPhone}
             onSetPrice={setBookingPrice}
+            onSetPaymentMethod={setBookingPaymentMethod}
             waitlist={data.waitlist || []}
             onAddToWaitlist={addWaitlistEntry}
             onRemoveFromWaitlist={removeWaitlistEntry}
@@ -1399,7 +1414,7 @@ function ConversationModal({ phone, messages, onClose, settings }) {
 
 /* ============================== Today Tab ============================== */
 
-function TodayTab({ selectedDate, setSelectedDate, dentistFilter, setDentistFilter, dentistNames, upcoming3Days, bookings, allBookings, settings, setBookingStatus, showWalkIn, setShowWalkIn, onAddWalkIn, rescheduleTarget, setRescheduleTarget, onReschedule, onCancel, onViewConversation, onSetPrice, waitlist = [], onAddToWaitlist, onRemoveFromWaitlist, onConvertWaitlistEntry }) {
+function TodayTab({ selectedDate, setSelectedDate, dentistFilter, setDentistFilter, dentistNames, upcoming3Days, bookings, allBookings, settings, setBookingStatus, showWalkIn, setShowWalkIn, onAddWalkIn, rescheduleTarget, setRescheduleTarget, onReschedule, onCancel, onViewConversation, onSetPrice, onSetPaymentMethod, waitlist = [], onAddToWaitlist, onRemoveFromWaitlist, onConvertWaitlistEntry }) {
   const isToday = dateKey(selectedDate) === dateKey(new Date());
   function shiftDay(n) { const d = new Date(selectedDate); d.setDate(d.getDate() + n); setSelectedDate(d); }
 
@@ -1474,6 +1489,7 @@ function TodayTab({ selectedDate, setSelectedDate, dentistFilter, setDentistFilt
             onCancel={() => { if (window.confirm(`Cancel ${b.booking_id} for ${b.patient_name}? The patient should still be informed directly — this only updates records.`)) onCancel(b); }}
             onViewConversation={() => onViewConversation(b.patient_phone)}
             onSetPrice={(price) => onSetPrice(b, price)}
+            onSetPaymentMethod={(pm) => onSetPaymentMethod(b, pm)}
             locale={settings?.locale} currencySymbol={settings?.currency_symbol ?? "₹"}
             selectable={selectableIds.has(b.booking_id)}
             selected={selected.has(b.booking_id)}
@@ -1573,12 +1589,15 @@ function WaitlistPanel({ waitlist, settings, onRemove, onConvert }) {
   );
 }
 
-function BookingCard({ booking: b, onStatus, onReschedule, onCancel, onViewConversation, onSetPrice, locale, currencySymbol = "₹", selectable = false, selected = false, onToggleSelect }) {
+const PAYMENT_METHOD_LABELS = { cash: "Cash", card: "Card", upi: "UPI" };
+
+function BookingCard({ booking: b, onStatus, onReschedule, onCancel, onViewConversation, onSetPrice, onSetPaymentMethod, locale, currencySymbol = "₹", selectable = false, selected = false, onToggleSelect }) {
   const ended = new Date(b.appointment_end) < new Date();
   const missedAction = ended && b.status === "confirmed";
   const active = b.status === "confirmed" || b.status === "arrived";
   const [editingPrice, setEditingPrice] = useState(false);
   const [priceDraft, setPriceDraft] = useState(b.price ?? "");
+  const [editingPayment, setEditingPayment] = useState(false);
   return (
     <Card className={`p-3 ${selected ? "ring-2 ring-teal-500" : ""}`}>
       <div className="flex items-start justify-between gap-2">
@@ -1606,6 +1625,20 @@ function BookingCard({ booking: b, onStatus, onReschedule, onCancel, onViewConve
           ) : (
             <button onClick={() => setEditingPrice(true)} className="text-[11px] text-stone-500 hover:text-teal-700 no-print flex items-center gap-1">
               {b.price != null ? `${currencySymbol}${b.price}` : "Set price"} <Edit3 size={10} />
+            </button>
+          )}
+          {editingPayment ? (
+            <select autoFocus value={b.payment_method ?? ""} onChange={(e) => { onSetPaymentMethod(e.target.value || null); setEditingPayment(false); }}
+              onBlur={() => setEditingPayment(false)}
+              className="no-print border border-stone-300 rounded px-1 py-0.5 text-[11px]">
+              <option value="">— Not set —</option>
+              <option value="cash">Cash</option>
+              <option value="card">Card</option>
+              <option value="upi">UPI</option>
+            </select>
+          ) : (
+            <button onClick={() => setEditingPayment(true)} className="text-[11px] text-stone-500 hover:text-teal-700 no-print flex items-center gap-1">
+              {b.payment_method ? PAYMENT_METHOD_LABELS[b.payment_method] ?? b.payment_method : "Set payment"} <Edit3 size={10} />
             </button>
           )}
         </div>

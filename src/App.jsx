@@ -8,7 +8,7 @@ import {
   ChevronDown, ChevronUp, StickyNote, Stethoscope,
   CircleCheck, CircleDot, WifiOff, Wifi, MessageSquare, CalendarClock,
   Ban, Send, BookOpen, History, HelpCircle, Edit3, Lock, LogOut, Trash2,
-  SlidersHorizontal, Undo2, Mail, Sun, Moon, FileDown
+  SlidersHorizontal, Undo2, Mail, Sun, Moon, FileDown, Wallet, ExternalLink, Copy
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid
@@ -222,7 +222,14 @@ function buildDemoData() {
 
   const errorLog = [];
 
-  return { dentists, bookings, patients, escalations, executionErrors, failedBookingAttempts, reviewTracking, aiCostTracking, clinicSettings, conversationLogs, faqMisses, documents, auditLog, inboundContacts, waitlist, adminAlerts, cancellationLogs, rescheduleLogs, remindersSent, webhookErrors, errorLog };
+  // Payments — fee links sent via WhatsApp (Stripe Checkout), tracked in `payments`.
+  const payments = [
+    { id: "pay-demo-1", booking_id: "BK-DEMO02", patient_phone: "+919876500002", amount: 4500, currency: "inr", fee_description: "Root canal consult", stripe_session_id: "cs_test_demo1", checkout_url: "https://checkout.stripe.com/c/pay/cs_test_demo1", status: "paid", created_at: fromToday(-1, 11, 0), paid_at: fromToday(-1, 11, 6) },
+    { id: "pay-demo-2", booking_id: "BK-DEMO05", patient_phone: "+919876500005", amount: 7000, currency: "inr", fee_description: "Teeth whitening", stripe_session_id: "cs_test_demo2", checkout_url: "https://checkout.stripe.com/c/pay/cs_test_demo2", status: "pending", created_at: fromToday(0, 9, 0), paid_at: null },
+    { id: "pay-demo-3", booking_id: "BK-DEMO11", patient_phone: "+919876500006", amount: 1500, currency: "inr", fee_description: "Cleaning", stripe_session_id: "cs_test_demo3", checkout_url: "https://checkout.stripe.com/c/pay/cs_test_demo3", status: "expired", created_at: fromToday(-3, 9, 30), paid_at: null },
+  ];
+
+  return { dentists, bookings, patients, escalations, executionErrors, failedBookingAttempts, reviewTracking, aiCostTracking, clinicSettings, conversationLogs, faqMisses, documents, auditLog, inboundContacts, waitlist, adminAlerts, cancellationLogs, rescheduleLogs, remindersSent, webhookErrors, errorLog, payments };
 }
 
 /* ============================== data client (REST, using the signed-in user's token) ============================== */
@@ -309,6 +316,17 @@ function StatusBadge({ status }) {
     no_show: { label: "No-show", cls: "bg-red-100 text-red-800 border-red-300" },
     cancelled: { label: "Cancelled", cls: "bg-stone-200 text-stone-600 border-stone-300" },
     completed: { label: "Completed", cls: "bg-indigo-100 text-indigo-700 border-indigo-300" },
+  };
+  const s = map[status] || { label: status, cls: "bg-stone-100 text-stone-600 border-stone-300" };
+  return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${s.cls}`}>{s.label}</span>;
+}
+
+function PaymentStatusBadge({ status }) {
+  const map = {
+    paid: { label: "Paid", cls: "bg-emerald-100 text-emerald-800 border-emerald-300" },
+    pending: { label: "Pending", cls: "bg-amber-100 text-amber-800 border-amber-300" },
+    expired: { label: "Expired", cls: "bg-stone-200 text-stone-600 border-stone-300" },
+    failed: { label: "Failed", cls: "bg-red-100 text-red-800 border-red-300" },
   };
   const s = map[status] || { label: status, cls: "bg-stone-100 text-stone-600 border-stone-300" };
   return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${s.cls}`}>{s.label}</span>;
@@ -644,8 +662,10 @@ function Dashboard({ config, session, userEmail, onLogout, supabase }) {
         client.select("reminders_sent", "select=*&order=sent_at.desc&limit=100"),
         client.select("webhook_errors", "select=*&order=timestamp.desc&limit=50"),
         client.select("error_log", "select=*&order=timestamp.desc&limit=50"),
+        // Phase 10 — patient fee payments (Stripe Checkout links sent via WhatsApp).
+        client.select("payments", "select=*&order=created_at.desc&limit=500"),
       ]);
-      const [bookings, patients, escalations, executionErrors, failedBookingAttempts, reviewTracking, aiCostTracking, clinicSettingsArr, faqMisses, documents, auditLog, dentists, staffAccountRows, inboundContacts, waitlist, adminAlerts, cancellationLogs, rescheduleLogs, remindersSent, webhookErrors, errorLog] =
+      const [bookings, patients, escalations, executionErrors, failedBookingAttempts, reviewTracking, aiCostTracking, clinicSettingsArr, faqMisses, documents, auditLog, dentists, staffAccountRows, inboundContacts, waitlist, adminAlerts, cancellationLogs, rescheduleLogs, remindersSent, webhookErrors, errorLog, payments] =
         results.map((r) => (r.status === "fulfilled" ? r.value : []));
 
       // Security fix: this used to default to "owner" (full access) whenever
@@ -685,6 +705,7 @@ function Dashboard({ config, session, userEmail, onLogout, supabase }) {
         remindersSent: remindersSent || [],
         webhookErrors: webhookErrors || [],
         errorLog: errorLog || [],
+        payments: payments || [],
       }));
       setUsingDemoData(false);
 
@@ -794,8 +815,8 @@ function Dashboard({ config, session, userEmail, onLogout, supabase }) {
 
   const canSeeSettings = myRole === "owner";
   const isUnprovisioned = myRole === "unprovisioned";
-  useEffect(() => { if ((tab === "settings" || tab === "reports") && !canSeeSettings) setTab("today"); }, [tab, canSeeSettings]);
-  const visibleTabs = useMemo(() => TABS.filter((t) => (t.key !== "settings" && t.key !== "reports") || canSeeSettings), [canSeeSettings]);
+  useEffect(() => { if ((tab === "settings" || tab === "reports" || tab === "payments") && !canSeeSettings) setTab("today"); }, [tab, canSeeSettings]);
+  const visibleTabs = useMemo(() => TABS.filter((t) => (t.key !== "settings" && t.key !== "reports" && t.key !== "payments") || canSeeSettings), [canSeeSettings]);
 
   /* ---- booking status updates ---- */
   async function setBookingStatus(booking, status) {
@@ -1248,6 +1269,9 @@ function Dashboard({ config, session, userEmail, onLogout, supabase }) {
           </>
         )}
         {tab === "reviews" && <ReviewsTab reviewTracking={data.reviewTracking} resolveComplaint={resolveComplaint} settings={data.clinicSettings} />}
+        {tab === "payments" && canSeeSettings && (
+          <PaymentsTab payments={data.payments || []} settings={data.clinicSettings} />
+        )}
         {tab === "reports" && canSeeSettings && (
           <ReportsTab
             bookings={data.bookings} escalations={data.escalations} aiCostTracking={data.aiCostTracking}
@@ -1310,6 +1334,7 @@ const TABS = [
   { key: "patients", label: "Patients", icon: Users },
   { key: "alerts", label: "Alerts", icon: AlertTriangle },
   { key: "reviews", label: "Reviews", icon: Star },
+  { key: "payments", label: "Payments", icon: Wallet },
   { key: "reports", label: "Reports", icon: TrendingUp },
   { key: "settings", label: "Settings", icon: SettingsIcon },
 ];
@@ -1327,6 +1352,7 @@ function CommandPalette({ onClose, patients, bookings, onGoToTab, onOpenPatient,
     { label: "Go to Patients", icon: Users, run: () => onGoToTab("patients") },
     { label: "Go to Alerts", icon: AlertTriangle, run: () => onGoToTab("alerts") },
     { label: "Go to Reviews", icon: Star, run: () => onGoToTab("reviews") },
+    ...(canSeeSettings ? [{ label: "Go to Payments", icon: Wallet, run: () => onGoToTab("payments") }] : []),
     ...(canSeeSettings ? [{ label: "Go to Reports", icon: TrendingUp, run: () => onGoToTab("reports") }] : []),
     ...(canSeeSettings ? [{ label: "Go to Settings", icon: SettingsIcon, run: () => onGoToTab("settings") }] : []),
     { label: "Refresh data", icon: RefreshCw, run: onRefresh },
@@ -2135,6 +2161,100 @@ function ReviewsTab({ reviewTracking, resolveComplaint, settings }) {
           </Card>
         ))}
       </Section>
+    </div>
+  );
+}
+
+/* ============================== Payments Tab ============================== */
+
+function PaymentsTab({ payments = [], settings }) {
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [copiedId, setCopiedId] = useState(null);
+  const currencySymbol = settings?.currency_symbol ?? "₹";
+  const locale = settings?.locale;
+
+  const today = new Date();
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+
+  const paid = payments.filter((p) => p.status === "paid");
+  const pending = payments.filter((p) => p.status === "pending");
+  const expired = payments.filter((p) => p.status === "expired");
+  const collectedThisMonth = paid
+    .filter((p) => p.paid_at && new Date(p.paid_at) >= monthStart)
+    .reduce((s, p) => s + Number(p.amount || 0), 0);
+  const pendingTotal = pending.reduce((s, p) => s + Number(p.amount || 0), 0);
+
+  const filtered = payments.filter((p) => statusFilter === "all" || p.status === statusFilter);
+
+  function copyLink(p) {
+    if (!p.checkout_url) return;
+    navigator.clipboard?.writeText(p.checkout_url).then(() => {
+      setCopiedId(p.id);
+      setTimeout(() => setCopiedId(null), 1500);
+    });
+  }
+
+  const FILTERS = [
+    { key: "all", label: "All" },
+    { key: "pending", label: "Pending" },
+    { key: "paid", label: "Paid" },
+    { key: "expired", label: "Expired" },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <h2 className="text-sm font-semibold text-stone-700 dark:text-stone-200">Payments</h2>
+
+      <div className="grid grid-cols-3 gap-3">
+        <StatCard label="Collected this month" value={`${currencySymbol}${collectedThisMonth.toLocaleString(locale)}`} />
+        <StatCard label="Pending links" value={`${pending.length} (${currencySymbol}${pendingTotal.toLocaleString(locale)})`} />
+        <StatCard label="Expired unpaid" value={expired.length} />
+      </div>
+
+      <div className="flex gap-1.5 flex-wrap">
+        {FILTERS.map((f) => (
+          <button key={f.key} onClick={() => setStatusFilter(f.key)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium border whitespace-nowrap ${statusFilter === f.key ? "bg-teal-700 text-white border-teal-700" : "bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border-stone-300 dark:border-stone-600"}`}>
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {filtered.length === 0 ? (
+        <EmptyState icon={Wallet} text="No payments yet." />
+      ) : (
+        <div className="space-y-2">
+          {filtered.map((p) => (
+            <Card key={p.id} className="p-3.5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-semibold text-stone-800 dark:text-stone-100 text-sm">{currencySymbol}{Number(p.amount || 0).toLocaleString(locale)}</p>
+                    <PaymentStatusBadge status={p.status} />
+                  </div>
+                  <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">{p.fee_description || "Fee"} · {p.booking_id || "—"}</p>
+                  <p className="text-[11px] text-stone-400 mt-1">{p.patient_phone} · Sent {fmtDateShort(p.created_at, locale)}{p.paid_at ? ` · Paid ${fmtDateShort(p.paid_at, locale)}` : ""}</p>
+                </div>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <a href={waLink(p.patient_phone)} target="_blank" rel="noreferrer" title="Message on WhatsApp"
+                    className="p-2 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200"><MessageCircle size={14} /></a>
+                  {p.checkout_url && p.status === "pending" && (
+                    <>
+                      <button onClick={() => copyLink(p)} title="Copy payment link" className="p-2 rounded-lg bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-200">
+                        <Copy size={14} />
+                      </button>
+                      <a href={p.checkout_url} target="_blank" rel="noreferrer" title="Open payment link" className="p-2 rounded-lg bg-teal-100 text-teal-700 hover:bg-teal-200">
+                        <ExternalLink size={14} />
+                      </a>
+                    </>
+                  )}
+                </div>
+              </div>
+              {copiedId === p.id && <p className="text-[11px] text-teal-600 mt-1">Link copied.</p>}
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

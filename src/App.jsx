@@ -8,11 +8,20 @@ import {
   ChevronDown, ChevronUp, StickyNote, Stethoscope,
   CircleCheck, CircleDot, WifiOff, Wifi, MessageSquare, CalendarClock,
   Ban, Send, BookOpen, History, HelpCircle, Edit3, Lock, LogOut, Trash2,
-  SlidersHorizontal, Undo2, Mail, Sun, Moon, FileDown, Wallet, ExternalLink, Copy
+  SlidersHorizontal, Undo2, Mail, Sun, Moon, FileDown
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid
 } from "recharts";
+
+// Chart look for the neon HUD theme (gradient id "neonBar" is defined once in the app root).
+const CHART_GRID = "#1b2750";
+const CHART_TIP = {
+  contentStyle: { background: "rgba(6,10,28,.96)", border: "1px solid rgba(34,229,255,.45)", borderRadius: 10, color: "#e2e9fd", boxShadow: "0 0 24px -6px rgba(34,229,255,.55)" },
+  labelStyle: { color: "#7be9fb" },
+  itemStyle: { color: "#e2e9fd" },
+  cursor: { fill: "rgba(34,229,255,.08)" },
+};
 
 /* ============================== helpers ============================== */
 
@@ -222,14 +231,7 @@ function buildDemoData() {
 
   const errorLog = [];
 
-  // Payments — fee links sent via WhatsApp (Stripe Checkout), tracked in `payments`.
-  const payments = [
-    { id: "pay-demo-1", booking_id: "BK-DEMO02", patient_phone: "+919876500002", amount: 4500, currency: "inr", fee_description: "Root canal consult", stripe_session_id: "cs_test_demo1", checkout_url: "https://checkout.stripe.com/c/pay/cs_test_demo1", status: "paid", created_at: fromToday(-1, 11, 0), paid_at: fromToday(-1, 11, 6) },
-    { id: "pay-demo-2", booking_id: "BK-DEMO05", patient_phone: "+919876500005", amount: 7000, currency: "inr", fee_description: "Teeth whitening", stripe_session_id: "cs_test_demo2", checkout_url: "https://checkout.stripe.com/c/pay/cs_test_demo2", status: "pending", created_at: fromToday(0, 9, 0), paid_at: null },
-    { id: "pay-demo-3", booking_id: "BK-DEMO11", patient_phone: "+919876500006", amount: 1500, currency: "inr", fee_description: "Cleaning", stripe_session_id: "cs_test_demo3", checkout_url: "https://checkout.stripe.com/c/pay/cs_test_demo3", status: "expired", created_at: fromToday(-3, 9, 30), paid_at: null },
-  ];
-
-  return { dentists, bookings, patients, escalations, executionErrors, failedBookingAttempts, reviewTracking, aiCostTracking, clinicSettings, conversationLogs, faqMisses, documents, auditLog, inboundContacts, waitlist, adminAlerts, cancellationLogs, rescheduleLogs, remindersSent, webhookErrors, errorLog, payments };
+  return { dentists, bookings, patients, escalations, executionErrors, failedBookingAttempts, reviewTracking, aiCostTracking, clinicSettings, conversationLogs, faqMisses, documents, auditLog, inboundContacts, waitlist, adminAlerts, cancellationLogs, rescheduleLogs, remindersSent, webhookErrors, errorLog };
 }
 
 /* ============================== data client (REST, using the signed-in user's token) ============================== */
@@ -321,17 +323,6 @@ function StatusBadge({ status }) {
   return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${s.cls}`}>{s.label}</span>;
 }
 
-function PaymentStatusBadge({ status }) {
-  const map = {
-    paid: { label: "Paid", cls: "bg-emerald-100 text-emerald-800 border-emerald-300" },
-    pending: { label: "Pending", cls: "bg-amber-100 text-amber-800 border-amber-300" },
-    expired: { label: "Expired", cls: "bg-stone-200 text-stone-600 border-stone-300" },
-    failed: { label: "Failed", cls: "bg-red-100 text-red-800 border-red-300" },
-  };
-  const s = map[status] || { label: status, cls: "bg-stone-100 text-stone-600 border-stone-300" };
-  return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${s.cls}`}>{s.label}</span>;
-}
-
 function SeverityBadge({ severity }) {
   const map = {
     critical: "bg-red-100 text-red-800 border-red-300",
@@ -342,7 +333,7 @@ function SeverityBadge({ severity }) {
 }
 
 function Card({ children, className = "" }) {
-  return <div className={`bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm ${className}`}>{children}</div>;
+  return <div className={`bg-panel rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm ${className}`}>{children}</div>;
 }
 
 function EmptyState({ icon: Icon, text }) {
@@ -437,8 +428,8 @@ function ConnectScreen({ onConnected }) {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 flex items-center justify-center px-4">
-      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6 w-full max-w-sm">
+    <div className="min-h-screen bg-transparent flex items-center justify-center px-4">
+      <div className="bg-panel rounded-2xl border border-stone-200 shadow-sm p-6 w-full max-w-sm">
         <div className="flex flex-col items-center text-center mb-4">
           <div className="w-11 h-11 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center mb-3">
             <Stethoscope size={20} />
@@ -480,8 +471,8 @@ function LoginScreen({ supabase, onChangeProject, configFromEnv }) {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 flex items-center justify-center px-4">
-      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6 w-full max-w-sm">
+    <div className="min-h-screen bg-transparent flex items-center justify-center px-4">
+      <div className="bg-panel rounded-2xl border border-stone-200 shadow-sm p-6 w-full max-w-sm">
         <div className="flex flex-col items-center text-center mb-4">
           <div className="w-11 h-11 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center mb-3">
             <Lock size={20} />
@@ -576,7 +567,9 @@ function Dashboard({ config, session, userEmail, onLogout, supabase }) {
     try { return localStorage.getItem("smilecare_dark_mode") === "1"; } catch (e) { return false; }
   });
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", darkMode);
+    // Neon HUD is the one and only theme now — keep the legacy "dark" class off so the
+    // old light/dark variants never fight the new palette.
+    document.documentElement.classList.remove("dark");
     try { localStorage.setItem("smilecare_dark_mode", darkMode ? "1" : "0"); } catch (e) { /* ignore */ }
   }, [darkMode]);
   const [usingDemoData, setUsingDemoData] = useState(true);
@@ -662,10 +655,8 @@ function Dashboard({ config, session, userEmail, onLogout, supabase }) {
         client.select("reminders_sent", "select=*&order=sent_at.desc&limit=100"),
         client.select("webhook_errors", "select=*&order=timestamp.desc&limit=50"),
         client.select("error_log", "select=*&order=timestamp.desc&limit=50"),
-        // Phase 10 — patient fee payments (Stripe Checkout links sent via WhatsApp).
-        client.select("payments", "select=*&order=created_at.desc&limit=500"),
       ]);
-      const [bookings, patients, escalations, executionErrors, failedBookingAttempts, reviewTracking, aiCostTracking, clinicSettingsArr, faqMisses, documents, auditLog, dentists, staffAccountRows, inboundContacts, waitlist, adminAlerts, cancellationLogs, rescheduleLogs, remindersSent, webhookErrors, errorLog, payments] =
+      const [bookings, patients, escalations, executionErrors, failedBookingAttempts, reviewTracking, aiCostTracking, clinicSettingsArr, faqMisses, documents, auditLog, dentists, staffAccountRows, inboundContacts, waitlist, adminAlerts, cancellationLogs, rescheduleLogs, remindersSent, webhookErrors, errorLog] =
         results.map((r) => (r.status === "fulfilled" ? r.value : []));
 
       // Security fix: this used to default to "owner" (full access) whenever
@@ -705,7 +696,6 @@ function Dashboard({ config, session, userEmail, onLogout, supabase }) {
         remindersSent: remindersSent || [],
         webhookErrors: webhookErrors || [],
         errorLog: errorLog || [],
-        payments: payments || [],
       }));
       setUsingDemoData(false);
 
@@ -815,8 +805,8 @@ function Dashboard({ config, session, userEmail, onLogout, supabase }) {
 
   const canSeeSettings = myRole === "owner";
   const isUnprovisioned = myRole === "unprovisioned";
-  useEffect(() => { if ((tab === "settings" || tab === "reports" || tab === "payments") && !canSeeSettings) setTab("today"); }, [tab, canSeeSettings]);
-  const visibleTabs = useMemo(() => TABS.filter((t) => (t.key !== "settings" && t.key !== "reports" && t.key !== "payments") || canSeeSettings), [canSeeSettings]);
+  useEffect(() => { if ((tab === "settings" || tab === "reports") && !canSeeSettings) setTab("today"); }, [tab, canSeeSettings]);
+  const visibleTabs = useMemo(() => TABS.filter((t) => (t.key !== "settings" && t.key !== "reports") || canSeeSettings), [canSeeSettings]);
 
   /* ---- booking status updates ---- */
   async function setBookingStatus(booking, status) {
@@ -1128,8 +1118,8 @@ function Dashboard({ config, session, userEmail, onLogout, supabase }) {
 
   if (isUnprovisioned) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center p-6">
-        <div className="max-w-sm w-full bg-white rounded-xl shadow-sm p-6 text-center space-y-3">
+      <div className="min-h-screen bg-transparent flex items-center justify-center p-6">
+        <div className="max-w-sm w-full bg-panel rounded-xl shadow-sm p-6 text-center space-y-3">
           <div className="text-sm font-semibold text-stone-800">No access yet</div>
           <p className="text-sm text-stone-600">
             You're signed in as <span className="font-medium">{userEmail}</span>, but this account
@@ -1146,64 +1136,71 @@ function Dashboard({ config, session, userEmail, onLogout, supabase }) {
 
   return (
     <ErrorBoundary onError={handleCrash}>
-    <div className="min-h-screen bg-stone-50 dark:bg-stone-900 text-stone-900 dark:text-stone-100 flex flex-col">
+    <div className="min-h-screen bg-transparent text-stone-900 flex flex-col">
       <style>{`@media print { .no-print { display: none !important; } .print-area { padding: 0 !important; } }`}</style>
+      <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true" focusable="false">
+        <defs>
+          <linearGradient id="neonBar" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#22e5ff" />
+            <stop offset="100%" stopColor="#7c3aed" />
+          </linearGradient>
+        </defs>
+      </svg>
 
-      <header className="sticky top-0 z-20 bg-teal-800 dark:bg-stone-800 text-white px-4 py-3 no-print">
+      <header className="hud-header sticky top-0 z-20 bg-stone-50/75 backdrop-blur-xl text-white px-4 py-3 no-print">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Stethoscope size={22} className="text-teal-200" />
+          <div className="flex items-center gap-3">
+            <div className="relative grid place-items-center w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400/25 to-violet-500/25 ring-1 ring-cyan-300/50 shadow-neon">
+              <Stethoscope size={20} className="text-cyan-200" />
+            </div>
             <div>
-              <h1 className="font-semibold text-sm leading-tight">{data.clinicSettings?.clinic_name || "Smile Care Dental"}</h1>
-              <p className="text-[11px] text-teal-200 leading-tight">{userEmail || "Staff Dashboard"}</p>
+              <h1 className="brand-text font-bold text-sm tracking-wide leading-tight">{data.clinicSettings?.clinic_name || "Smile Care Dental"}</h1>
+              <p className="text-[11px] text-stone-500 leading-tight">{userEmail || "Staff Dashboard"}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {!usingDemoData && realtimeStatus === "reconnecting" ? (
-              <span className="hidden sm:flex items-center gap-1 text-[11px] text-amber-100 bg-amber-700/70 px-2 py-1 rounded-full animate-pulse" title="Live updates dropped — data shown may be stale until this reconnects">
+              <span className="hidden sm:flex items-center gap-1.5 text-[11px] text-amber-700 bg-amber-100 border border-amber-300 px-2.5 py-1 rounded-full animate-pulse" title="Live updates dropped — data shown may be stale until this reconnects">
                 <WifiOff size={12} /> Reconnecting…
               </span>
             ) : !usingDemoData ? (
-              <span className="hidden sm:flex items-center gap-1 text-[11px] text-teal-100 bg-teal-700 px-2 py-1 rounded-full">
-                <Wifi size={12} /> {lastRefreshed ? `Refreshed ${fmtTime(lastRefreshed.toISOString(), data.clinicSettings.locale)}` : "Connected"}
+              <span className="hidden sm:flex items-center gap-1.5 text-[11px] text-emerald-700 bg-emerald-100 border border-emerald-300 px-2.5 py-1 rounded-full">
+                <span className="live-dot" /> {lastRefreshed ? `Refreshed ${fmtTime(lastRefreshed.toISOString(), data.clinicSettings.locale)}` : "Connected"}
               </span>
             ) : (
-              <span className="hidden sm:flex items-center gap-1 text-[11px] text-amber-100 bg-amber-700/60 px-2 py-1 rounded-full">
+              <span className="hidden sm:flex items-center gap-1.5 text-[11px] text-amber-700 bg-amber-100 border border-amber-300 px-2.5 py-1 rounded-full">
                 <WifiOff size={12} /> Loading…
               </span>
             )}
-            <button onClick={refresh} className="p-1.5 rounded-lg hover:bg-teal-700" title="Refresh">
+            <button onClick={refresh} className="p-2 rounded-lg text-stone-600 hover:text-cyan-200 hover:bg-cyan-400/10 hover:shadow-neon transition" title="Refresh">
               <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
             </button>
-            <button onClick={() => setDarkMode((v) => !v)} className="p-1.5 rounded-lg hover:bg-teal-700" title={darkMode ? "Switch to light mode" : "Switch to dark mode"}>
-              {darkMode ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
-            <button onClick={onLogout} className="p-1.5 rounded-lg hover:bg-teal-700" title="Sign out">
+            <button onClick={onLogout} className="p-2 rounded-lg text-stone-600 hover:text-pink-300 hover:bg-pink-400/10 transition" title="Sign out">
               <LogOut size={16} />
             </button>
           </div>
         </div>
 
         <div className="relative mt-3">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-teal-300" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-cyan-300" />
           <input
             value={search}
             onChange={(e) => { setSearch(e.target.value); setSearchNotice(""); }}
             onKeyDown={(e) => e.key === "Enter" && handleGlobalSearchEnter()}
             placeholder="Search booking ID, patient name, or phone — press Enter"
-            className="w-full pl-9 pr-14 py-2 rounded-lg bg-teal-700/60 placeholder-teal-200 text-white text-sm border border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-300"
+            className="w-full pl-9 pr-14 py-2 rounded-xl bg-stone-100/80 text-white text-sm border border-stone-300 focus:outline-none focus:ring-2 focus:ring-cyan-300/60"
           />
-          <button onClick={() => setPaletteOpen(true)} className="hidden sm:block absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-teal-200 border border-teal-500 rounded px-1.5 py-0.5" title="Command palette">⌘K</button>
+          <button onClick={() => setPaletteOpen(true)} className="hidden sm:block absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-cyan-200 border border-cyan-400/50 rounded px-1.5 py-0.5" title="Command palette">⌘K</button>
         </div>
-        {searchNotice && <p className="text-[11px] text-amber-200 mt-1">{searchNotice}</p>}
+        {searchNotice && <p className="text-[11px] text-amber-700 mt-1">{searchNotice}</p>}
 
-        <nav className="hidden md:flex gap-1 mt-3">
+        <nav className="hidden md:flex gap-1.5 mt-3">
           {visibleTabs.map((t) => (
             <button key={t.key} onClick={() => setTab(t.key)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition ${tab === t.key ? "bg-white text-teal-800" : "text-teal-100 hover:bg-teal-700"}`}>
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium transition ${tab === t.key ? "bg-cyan-400/10 text-cyan-200 ring-1 ring-cyan-300/60 shadow-neon" : "text-stone-500 hover:text-cyan-200 hover:bg-white/5"}`}>
               <t.icon size={15} />
               {t.label}
-              {t.key === "alerts" && alertCount > 0 && <span className="ml-1 bg-red-500 text-white text-[10px] px-1.5 rounded-full">{alertCount}</span>}
+              {t.key === "alerts" && alertCount > 0 && <span className="ml-1 bg-red-500 text-white text-[10px] px-1.5 rounded-full shadow-[0_0_10px_#ff3d6a]">{alertCount}</span>}
             </button>
           ))}
         </nav>
@@ -1269,9 +1266,6 @@ function Dashboard({ config, session, userEmail, onLogout, supabase }) {
           </>
         )}
         {tab === "reviews" && <ReviewsTab reviewTracking={data.reviewTracking} resolveComplaint={resolveComplaint} settings={data.clinicSettings} />}
-        {tab === "payments" && canSeeSettings && (
-          <PaymentsTab payments={data.payments || []} settings={data.clinicSettings} />
-        )}
         {tab === "reports" && canSeeSettings && (
           <ReportsTab
             bookings={data.bookings} escalations={data.escalations} aiCostTracking={data.aiCostTracking}
@@ -1306,7 +1300,7 @@ function Dashboard({ config, session, userEmail, onLogout, supabase }) {
 
       {undoCancel && (
         <div className="no-print fixed bottom-16 md:bottom-4 inset-x-0 flex justify-center z-30 px-3">
-          <div className="bg-stone-900 text-white rounded-xl shadow-lg px-4 py-2.5 flex items-center gap-3 text-sm max-w-sm w-full sm:w-auto">
+          <div className="bg-stone-200 text-white border border-cyan-400/40 rounded-xl shadow-[0_0_30px_-8px_#22e5ff] px-4 py-2.5 flex items-center gap-3 text-sm max-w-sm w-full sm:w-auto">
             <span className="flex-1">Cancelled {undoCancel.booking_id} for {undoCancel.patient_name}.</span>
             <button onClick={undoLastCancel} className="flex items-center gap-1 font-medium text-teal-300 hover:text-teal-200 whitespace-nowrap">
               <Undo2 size={14} /> Undo
@@ -1315,7 +1309,7 @@ function Dashboard({ config, session, userEmail, onLogout, supabase }) {
         </div>
       )}
 
-      <nav className="no-print md:hidden fixed bottom-0 inset-x-0 bg-white dark:bg-stone-800 border-t border-stone-200 dark:border-stone-700 flex justify-around py-1.5 z-20">
+      <nav className="no-print md:hidden fixed bottom-0 inset-x-0 bg-panel border-t border-stone-200 dark:border-stone-700 flex justify-around py-1.5 z-20">
         {visibleTabs.map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)} className="relative flex flex-col items-center gap-0.5 px-2 py-1 min-w-[56px]">
             <t.icon size={20} className={tab === t.key ? "text-teal-700" : "text-stone-400"} />
@@ -1334,7 +1328,6 @@ const TABS = [
   { key: "patients", label: "Patients", icon: Users },
   { key: "alerts", label: "Alerts", icon: AlertTriangle },
   { key: "reviews", label: "Reviews", icon: Star },
-  { key: "payments", label: "Payments", icon: Wallet },
   { key: "reports", label: "Reports", icon: TrendingUp },
   { key: "settings", label: "Settings", icon: SettingsIcon },
 ];
@@ -1352,7 +1345,6 @@ function CommandPalette({ onClose, patients, bookings, onGoToTab, onOpenPatient,
     { label: "Go to Patients", icon: Users, run: () => onGoToTab("patients") },
     { label: "Go to Alerts", icon: AlertTriangle, run: () => onGoToTab("alerts") },
     { label: "Go to Reviews", icon: Star, run: () => onGoToTab("reviews") },
-    ...(canSeeSettings ? [{ label: "Go to Payments", icon: Wallet, run: () => onGoToTab("payments") }] : []),
     ...(canSeeSettings ? [{ label: "Go to Reports", icon: TrendingUp, run: () => onGoToTab("reports") }] : []),
     ...(canSeeSettings ? [{ label: "Go to Settings", icon: SettingsIcon, run: () => onGoToTab("settings") }] : []),
     { label: "Refresh data", icon: RefreshCw, run: onRefresh },
@@ -1365,7 +1357,7 @@ function CommandPalette({ onClose, patients, bookings, onGoToTab, onOpenPatient,
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-start justify-center pt-20 z-40 no-print" onClick={onClose}>
-      <div className="bg-white w-full sm:w-[480px] mx-3 sm:mx-0 rounded-xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-panel w-full sm:w-[480px] mx-3 sm:mx-0 rounded-xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-2 px-3 py-2.5 border-b border-stone-100">
           <Search size={16} className="text-stone-400" />
           <input ref={inputRef} value={q} onChange={(e) => setQ(e.target.value)}
@@ -1419,7 +1411,7 @@ function ConversationModal({ phone, messages, onClose, settings }) {
   const locale = settings?.locale;
   return (
     <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-30 no-print">
-      <div className="bg-white w-full sm:w-[420px] sm:rounded-xl rounded-t-2xl p-4 max-h-[80vh] flex flex-col">
+      <div className="bg-panel w-full sm:w-[420px] sm:rounded-xl rounded-t-2xl p-4 max-h-[80vh] flex flex-col">
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-semibold text-sm flex items-center gap-1.5"><MessageSquare size={15} /> Conversation · {phone}</h3>
           <button onClick={onClose}><X size={18} /></button>
@@ -1459,7 +1451,7 @@ function TodayTab({ selectedDate, setSelectedDate, dentistFilter, setDentistFilt
   return (
     <div className="space-y-3">
       <div className="flex justify-end no-print">
-        <button onClick={() => window.print()} className="px-3 py-1.5 rounded-xl border border-stone-300 bg-white text-stone-600 hover:bg-stone-100 flex items-center gap-1.5 text-xs font-medium">
+        <button onClick={() => window.print()} className="px-3 py-1.5 rounded-xl border border-stone-300 bg-panel text-stone-600 hover:bg-stone-100 flex items-center gap-1.5 text-xs font-medium">
           <Printer size={15} /> Print
         </button>
       </div>
@@ -1487,7 +1479,7 @@ function TodayTab({ selectedDate, setSelectedDate, dentistFilter, setDentistFilt
       <div className="flex gap-1.5 overflow-x-auto no-print">
         {["all", ...dentistNames].map((d) => (
           <button key={d} onClick={() => setDentistFilter(d)}
-            className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium border ${dentistFilter === d ? "bg-teal-700 text-white border-teal-700" : "bg-white text-stone-600 border-stone-300"}`}>
+            className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium border ${dentistFilter === d ? "bg-teal-700 text-white border-teal-700" : "bg-panel text-stone-600 border-stone-300"}`}>
             {d === "all" ? "All dentists" : d}
           </button>
         ))}
@@ -1729,7 +1721,7 @@ function BookingFormModal({ title, onClose, onSave, existingBookings, initial, e
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-30 no-print">
-      <div className="bg-white w-full sm:w-96 sm:rounded-xl rounded-t-2xl p-4 space-y-3">
+      <div className="bg-panel w-full sm:w-96 sm:rounded-xl rounded-t-2xl p-4 space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-sm">{title}</h3>
           <button onClick={onClose}><X size={18} /></button>
@@ -1838,10 +1830,10 @@ function PatientsTab({ patients, bookings, escalations, reviewTracking, expanded
       </div>
       <div className="flex items-center gap-2">
         <button onClick={() => setRecallOnly((v) => !v)}
-          className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border whitespace-nowrap ${recallOnly ? "bg-amber-100 text-amber-800 border-amber-300" : "bg-white text-stone-600 border-stone-300"}`}>
+          className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border whitespace-nowrap ${recallOnly ? "bg-amber-100 text-amber-800 border-amber-300" : "bg-panel text-stone-600 border-stone-300"}`}>
           <CalendarClock size={13} /> Recall due{recallCount > 0 && ` (${recallCount})`}
         </button>
-        <button onClick={exportPatientsCSV} className="ml-auto flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border border-stone-300 bg-white text-stone-600 whitespace-nowrap">
+        <button onClick={exportPatientsCSV} className="ml-auto flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border border-stone-300 bg-panel text-stone-600 whitespace-nowrap">
           <Download size={13} /> Export CSV
         </button>
       </div>
@@ -2138,10 +2130,10 @@ function ReviewsTab({ reviewTracking, resolveComplaint, settings }) {
         <div style={{ width: "100%", height: 160 }}>
           <ResponsiveContainer>
             <BarChart data={dist}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
-              <XAxis dataKey="star" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} width={24} />
-              <Tooltip /><Bar dataKey="count" fill="#0f766e" radius={[4, 4, 0, 0]} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={CHART_GRID} />
+              <XAxis dataKey="star" tick={{ fontSize: 12, fill: "#8d9bcb" }} axisLine={false} tickLine={false} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: "#8d9bcb" }} axisLine={false} tickLine={false} width={24} />
+              <Tooltip {...CHART_TIP} /><Bar dataKey="count" fill="url(#neonBar)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -2161,100 +2153,6 @@ function ReviewsTab({ reviewTracking, resolveComplaint, settings }) {
           </Card>
         ))}
       </Section>
-    </div>
-  );
-}
-
-/* ============================== Payments Tab ============================== */
-
-function PaymentsTab({ payments = [], settings }) {
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [copiedId, setCopiedId] = useState(null);
-  const currencySymbol = settings?.currency_symbol ?? "₹";
-  const locale = settings?.locale;
-
-  const today = new Date();
-  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-
-  const paid = payments.filter((p) => p.status === "paid");
-  const pending = payments.filter((p) => p.status === "pending");
-  const expired = payments.filter((p) => p.status === "expired");
-  const collectedThisMonth = paid
-    .filter((p) => p.paid_at && new Date(p.paid_at) >= monthStart)
-    .reduce((s, p) => s + Number(p.amount || 0), 0);
-  const pendingTotal = pending.reduce((s, p) => s + Number(p.amount || 0), 0);
-
-  const filtered = payments.filter((p) => statusFilter === "all" || p.status === statusFilter);
-
-  function copyLink(p) {
-    if (!p.checkout_url) return;
-    navigator.clipboard?.writeText(p.checkout_url).then(() => {
-      setCopiedId(p.id);
-      setTimeout(() => setCopiedId(null), 1500);
-    });
-  }
-
-  const FILTERS = [
-    { key: "all", label: "All" },
-    { key: "pending", label: "Pending" },
-    { key: "paid", label: "Paid" },
-    { key: "expired", label: "Expired" },
-  ];
-
-  return (
-    <div className="space-y-4">
-      <h2 className="text-sm font-semibold text-stone-700 dark:text-stone-200">Payments</h2>
-
-      <div className="grid grid-cols-3 gap-3">
-        <StatCard label="Collected this month" value={`${currencySymbol}${collectedThisMonth.toLocaleString(locale)}`} />
-        <StatCard label="Pending links" value={`${pending.length} (${currencySymbol}${pendingTotal.toLocaleString(locale)})`} />
-        <StatCard label="Expired unpaid" value={expired.length} />
-      </div>
-
-      <div className="flex gap-1.5 flex-wrap">
-        {FILTERS.map((f) => (
-          <button key={f.key} onClick={() => setStatusFilter(f.key)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium border whitespace-nowrap ${statusFilter === f.key ? "bg-teal-700 text-white border-teal-700" : "bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border-stone-300 dark:border-stone-600"}`}>
-            {f.label}
-          </button>
-        ))}
-      </div>
-
-      {filtered.length === 0 ? (
-        <EmptyState icon={Wallet} text="No payments yet." />
-      ) : (
-        <div className="space-y-2">
-          {filtered.map((p) => (
-            <Card key={p.id} className="p-3.5">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-semibold text-stone-800 dark:text-stone-100 text-sm">{currencySymbol}{Number(p.amount || 0).toLocaleString(locale)}</p>
-                    <PaymentStatusBadge status={p.status} />
-                  </div>
-                  <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">{p.fee_description || "Fee"} · {p.booking_id || "—"}</p>
-                  <p className="text-[11px] text-stone-400 mt-1">{p.patient_phone} · Sent {fmtDateShort(p.created_at, locale)}{p.paid_at ? ` · Paid ${fmtDateShort(p.paid_at, locale)}` : ""}</p>
-                </div>
-                <div className="flex items-center gap-1.5 flex-shrink-0">
-                  <a href={waLink(p.patient_phone)} target="_blank" rel="noreferrer" title="Message on WhatsApp"
-                    className="p-2 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200"><MessageCircle size={14} /></a>
-                  {p.checkout_url && p.status === "pending" && (
-                    <>
-                      <button onClick={() => copyLink(p)} title="Copy payment link" className="p-2 rounded-lg bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-200">
-                        <Copy size={14} />
-                      </button>
-                      <a href={p.checkout_url} target="_blank" rel="noreferrer" title="Open payment link" className="p-2 rounded-lg bg-teal-100 text-teal-700 hover:bg-teal-200">
-                        <ExternalLink size={14} />
-                      </a>
-                    </>
-                  )}
-                </div>
-              </div>
-              {copiedId === p.id && <p className="text-[11px] text-teal-600 mt-1">Link copied.</p>}
-            </Card>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
@@ -2395,10 +2293,10 @@ function ReportsTab({ bookings, escalations, aiCostTracking, settings, dentists 
           <div style={{ width: "100%", height: 140 }} className="mt-3">
             <ResponsiveContainer>
               <BarChart data={revenueByDentist} layout="vertical" margin={{ left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e7e5e4" />
-                <XAxis type="number" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                <YAxis type="category" dataKey="dentist" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} width={70} />
-                <Tooltip formatter={(v) => [`${currencySymbol}${v}`, "Revenue (month)"]} /><Bar dataKey="revenue" fill="#0f766e" radius={[0, 4, 4, 0]} />
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={CHART_GRID} />
+                <XAxis type="number" tick={{ fontSize: 10, fill: "#8d9bcb" }} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="dentist" tick={{ fontSize: 11, fill: "#8d9bcb" }} axisLine={false} tickLine={false} width={70} />
+                <Tooltip {...CHART_TIP} formatter={(v) => [`${currencySymbol}${v}`, "Revenue (month)"]} /><Bar dataKey="revenue" fill="url(#neonBar)" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -2414,10 +2312,10 @@ function ReportsTab({ bookings, escalations, aiCostTracking, settings, dentists 
         <div style={{ width: "100%", height: 160 }}>
           <ResponsiveContainer>
             <BarChart data={funnelStages}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
-              <XAxis dataKey="stage" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} interval={0} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} width={24} />
-              <Tooltip /><Bar dataKey="count" fill="#0f766e" radius={[4, 4, 0, 0]} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={CHART_GRID} />
+              <XAxis dataKey="stage" tick={{ fontSize: 10, fill: "#8d9bcb" }} axisLine={false} tickLine={false} interval={0} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#8d9bcb" }} axisLine={false} tickLine={false} width={24} />
+              <Tooltip {...CHART_TIP} /><Bar dataKey="count" fill="url(#neonBar)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -2444,10 +2342,10 @@ function ReportsTab({ bookings, escalations, aiCostTracking, settings, dentists 
         <div style={{ width: "100%", height: 140 }}>
           <ResponsiveContainer>
             <BarChart data={costTrend}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
-              <XAxis dataKey="day" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} interval={2} />
-              <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} width={36} />
-              <Tooltip formatter={(v) => [`$${v}`, "Cost"]} /><Bar dataKey="cost" fill="#0f766e" radius={[3, 3, 0, 0]} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={CHART_GRID} />
+              <XAxis dataKey="day" tick={{ fontSize: 10, fill: "#8d9bcb" }} axisLine={false} tickLine={false} interval={2} />
+              <YAxis tick={{ fontSize: 11, fill: "#8d9bcb" }} axisLine={false} tickLine={false} width={36} />
+              <Tooltip {...CHART_TIP} formatter={(v) => [`$${v}`, "Cost"]} /><Bar dataKey="cost" fill="url(#neonBar)" radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -2460,10 +2358,10 @@ function ReportsTab({ bookings, escalations, aiCostTracking, settings, dentists 
         <div style={{ width: "100%", height: 180 }}>
           <ResponsiveContainer>
             <BarChart data={statusBreakdown}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
-              <XAxis dataKey="status" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} width={24} />
-              <Tooltip /><Bar dataKey="count" fill="#0f766e" radius={[4, 4, 0, 0]} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={CHART_GRID} />
+              <XAxis dataKey="status" tick={{ fontSize: 11, fill: "#8d9bcb" }} axisLine={false} tickLine={false} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: "#8d9bcb" }} axisLine={false} tickLine={false} width={24} />
+              <Tooltip {...CHART_TIP} /><Bar dataKey="count" fill="url(#neonBar)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -2569,7 +2467,7 @@ function SettingsTab({ clinicSettings, saveClinicSettings, dentists, addDentist,
             <div className="flex gap-1.5 flex-wrap">
               {WEEKDAY_LABELS.map((label, day) => (
                 <button key={day} onClick={() => toggleClosedDay(day)}
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium border ${(configForm.closed_weekdays || []).includes(day) ? "bg-red-100 text-red-700 border-red-300" : "bg-white text-stone-500 border-stone-300"}`}>
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium border ${(configForm.closed_weekdays || []).includes(day) ? "bg-red-100 text-red-700 border-red-300" : "bg-panel text-stone-500 border-stone-300"}`}>
                   {label}
                 </button>
               ))}

@@ -19,7 +19,7 @@
      --hdr-1 --hdr-2 --hdr-3 header gradient stops
      --ecg                   colour of the vitals line in the header
      --scrim                 modal backdrop tint
-   ═════════════════════════════════════════════════════════════════════════ */
+   ═════════════════════════════════════════════════════════════════ */
 
 /* ───────── default theme: ICE (original Cleanroom) ───────── */
 :root {
@@ -224,7 +224,6 @@ html.dark[data-theme="lagoon"] {
   --n-950: 245 248 251;
 }
 
-
 @layer base {
   html { background: rgb(var(--canvas)); color-scheme: light; -webkit-text-size-adjust: 100%; }
   html.dark { color-scheme: dark; }
@@ -257,7 +256,7 @@ html.dark[data-theme="lagoon"] {
    oversized and animated with transform only (GPU-composited, no repaint),
    so it stays smooth even on a basic reception PC / phone. */
 .app-shell { position: relative; background: transparent; }
-.app-shell::before, .app-shell::after { content: ""; position: fixed; pointer-events: none; z-index: -1; }
+.app-shell::before, .app-shell::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: -1; }
 .app-shell::before {
   inset: -22%;
   background:
@@ -268,7 +267,6 @@ html.dark[data-theme="lagoon"] {
   will-change: transform;
 }
 .app-shell::after {
-  inset: 0;
   background-image: radial-gradient(rgb(var(--n-900) / 0.075) 1px, transparent 1.3px);
   background-size: 22px 22px;
   -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 78%);
@@ -276,6 +274,7 @@ html.dark[data-theme="lagoon"] {
 }
 .dark .app-shell::before {
   background:
+.dark .app-shell::before {
     radial-gradient(46% 40% at 82% 8%,  rgb(var(--a1) / 0.17), transparent 70%),
     radial-gradient(40% 36% at 6% 96%,  rgb(var(--a2) / 0.15), transparent 70%),
     radial-gradient(34% 30% at 52% 48%, rgb(var(--a3) / 0.07), transparent 72%);
@@ -305,17 +304,6 @@ html.dark[data-theme="lagoon"] {
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 25%, #000 75%, transparent);
           mask-image: linear-gradient(90deg, transparent, #000 25%, #000 75%, transparent);
 }
-/* light sweep that glides across the header every few seconds */
-.app-header::after {
-  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-  background: linear-gradient(100deg, transparent 38%, rgb(255 255 255 / 0.09) 50%, transparent 62%);
-  background-size: 260% 100%;
-  background-position: 130% 0;
-  animation: header-sweep 9s ease-in-out infinite;
-}
-@keyframes header-sweep { 0%, 55% { background-position: 130% 0; } 100% { background-position: -30% 0; } }
-
-/* vitals line — colour comes from --ecg, drawn through a mask so it re-themes */
 .ecg-trace {
   position: absolute; left: 0; right: 0; bottom: 0; height: 22px; z-index: -1; pointer-events: none; opacity: 0.42;
   background-color: var(--ecg);
@@ -333,64 +321,12 @@ html.dark[data-theme="lagoon"] {
   filter: drop-shadow(0 0 4px var(--ecg));
 }
 @keyframes ecg-run { to { -webkit-mask-position: -260px 100%, 0 0; mask-position: -260px 100%, 0 0; } }
+@media (prefers-reduced-motion: reduce) { .ecg-trace { animation: none; } .animate-pulse, .animate-spin { animation-duration: 0.01ms; animation-iteration-count: 1; } }
 
-/* Active tab: glowing pill + gentle lift */
-header nav button { position: relative; }
-header nav button.bg-panel { box-shadow: 0 6px 18px rgb(var(--a1) / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.6); transform: translateY(-1px); }
-header nav button:not(.bg-panel):hover { transform: translateY(-1px); }
-/* unread-alert counter breathes */
-header nav .bg-red-500.rounded-full { animation: alert-ring 2.2s ease-out infinite; }
-@keyframes alert-ring {
-  0%   { box-shadow: 0 0 0 0 rgb(229 72 77 / 0.55); }
-  70%  { box-shadow: 0 0 0 7px rgb(229 72 77 / 0); }
-  100% { box-shadow: 0 0 0 0 rgb(229 72 77 / 0); }
-}
-
-/* ═══════════════════════════ Glass cards with live light ═══════════════════════════
-   Cursor-follow spotlight + glowing hairline border. --mx / --my are set by
-   theme.js on pointer move; with no pointer they simply stay hidden. */
+/* Glass panels */
 .glass { -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%); }
-.glass:not(.fixed):not(.absolute):not(.sticky):not(.relative) { position: relative; }
-.glass:not(.fixed)::before, .glass:not(.fixed)::after {
-  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .35s ease;
-}
-.glass:not(.fixed)::before {
-  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 0%), rgb(var(--t-400) / 0.15), transparent 62%);
-}
-.glass:not(.fixed)::after {
-  padding: 1px;
-  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 0%), rgb(var(--t-400) / 0.95), transparent 66%);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
-}
-.glass:not(.fixed):hover::before, .glass:not(.fixed):hover::after { opacity: 1; }
 
-/* stat tiles lift on hover */
-.grid > .glass { transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease; }
-.grid > .glass:hover { transform: translateY(-2px); box-shadow: 0 14px 34px rgb(var(--glow) / 0.18), inset 0 1px 0 rgb(var(--hi)); }
-
-/* ═══════════════════════════ Entrance motion ═══════════════════════════
-   fill-mode is "backwards" on purpose: once finished, no animation effect
-   stays on the element, so modals / z-index inside never get trapped. */
-@keyframes rise { from { opacity: 0; transform: translateY(12px) scale(0.992); } to { opacity: 1; transform: none; } }
-@keyframes pop  { from { opacity: 0; transform: translateY(8px) scale(0.96); }  to { opacity: 1; transform: none; } }
-main > * { animation: rise .6s cubic-bezier(.2,.8,.2,1) backwards; }
-main > *:nth-child(2) { animation-delay: .06s; }
-main > *:nth-child(3) { animation-delay: .12s; }
-main > *:nth-child(4) { animation-delay: .18s; }
-main > *:nth-child(5) { animation-delay: .24s; }
-main > *:nth-child(n+6) { animation-delay: .3s; }
-.grid > .glass { animation: pop .55s cubic-bezier(.2,.9,.25,1.1) backwards; }
-.grid > .glass:nth-child(2) { animation-delay: .05s; }
-.grid > .glass:nth-child(3) { animation-delay: .10s; }
-.grid > .glass:nth-child(4) { animation-delay: .15s; }
-.grid > .glass:nth-child(5) { animation-delay: .20s; }
-.grid > .glass:nth-child(6) { animation-delay: .25s; }
-.grid > .glass:nth-child(n+7) { animation-delay: .30s; }
-
-/* ═══════════════════════════ Buttons ═══════════════════════════
-   Primary buttons: moving ion-gradient. On hover the light slides across. */
+/* Primary buttons: ion-gradient with a soft aqua glow */
 button.bg-teal-700, a.bg-teal-700 {
   background-image: linear-gradient(110deg, rgb(var(--t-600)) 0%, rgb(var(--t-700)) 38%, rgb(var(--t-500)) 52%, rgb(var(--t-700)) 66%, rgb(var(--t-800)) 100%);
   background-size: 230% 100%;
@@ -407,10 +343,10 @@ button.bg-teal-700:active:not(:disabled) { transform: translateY(1px) scale(0.98
 button:disabled { cursor: not-allowed; }
 header button.bg-teal-700 { background-image: none; box-shadow: none; }
 
-/* Modal scrims: blurred, tinted with the theme */
+/* Modal scrims become blurred deep-teal instead of flat black */
 .bg-black\/40, .bg-black\/50 { background-color: rgb(var(--scrim) / 0.58); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 
-/* ═══════════════════════════ Charts ═══════════════════════════ */
+/* Charts */
 .recharts-default-tooltip { background-color: rgb(var(--panel)) !important; border: 1px solid rgb(var(--n-200)) !important; border-radius: 12px !important; box-shadow: 0 10px 30px rgb(var(--glow) / 0.18); }
 .recharts-cartesian-grid line { stroke: rgb(var(--n-300) / 0.55); stroke-dasharray: 3 5; }
 .recharts-text, .recharts-cartesian-axis-tick-value { fill: rgb(var(--n-500)); }
@@ -418,23 +354,7 @@ header button.bg-teal-700 { background-image: none; box-shadow: none; }
 .recharts-bar-rectangle:hover path { filter: brightness(1.12) drop-shadow(0 6px 14px rgb(var(--t-400) / 0.5)); }
 .recharts-line-curve, .recharts-area-curve { filter: drop-shadow(0 4px 8px rgb(var(--t-500) / 0.4)); }
 
-/* ═══════════════════════════ Theme switch + calm mode ═══════════════════════════ */
-html.theme-anim *, html.theme-anim *::before, html.theme-anim *::after {
-  transition: background-color .55s ease, color .55s ease, border-color .55s ease, fill .55s ease, stroke .55s ease, box-shadow .55s ease !important;
-}
-.theme-pop { animation: theme-pop .22s cubic-bezier(.2,.9,.3,1.2) both; transform-origin: top right; }
-@keyframes theme-pop { from { opacity: 0; transform: translateY(-6px) scale(0.94); } to { opacity: 1; transform: none; } }
-
-html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="off"] *::after {
-  animation: none !important;
-  transition-duration: 0.01ms !important;
-  transition-delay: 0s !important;
-}
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
-}
-
-/* ═══════════════════════════ Dark-mode remaps for status colours ═══════════════════════════ */
+/* ── Dark-mode text/tint remaps for brand + status colours ── */
 .dark .text-teal-600, .dark .text-teal-700, .dark .text-teal-800 { color: rgb(var(--accent-text)); }
 .dark .bg-teal-50, .dark .bg-teal-100 { background-color: rgb(var(--t-400) / 0.14); }
 .dark .hover\:bg-teal-50:hover, .dark .hover\:bg-teal-100:hover { background-color: rgb(var(--t-400) / 0.22); }
@@ -465,7 +385,6 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
 .dark .hover\:bg-orange-200:hover { background-color: rgb(251 146 60 / 0.28); }
 .dark .text-orange-500, .dark .text-orange-600, .dark .text-orange-700, .dark .text-orange-800 { color: #FFBE8A; }
 .dark .border-orange-200, .dark .border-orange-300 { border-color: rgb(251 146 60 / 0.38); }
-
 
 /* ═══════════════════════════ Header: LIVE VITALS MONITOR ═══════════════════════════
    Everything below is decoration driven by HeaderFX.jsx + a few selectors on
@@ -574,4 +493,5 @@ header button.p-1\.5:active { transform: scale(0.92); }
   .glass { -webkit-backdrop-filter: none; backdrop-filter: none; }
   .glass::before, .glass::after { display: none !important; }
   main > *, .grid > .glass { animation: none !important; }
+}
 }

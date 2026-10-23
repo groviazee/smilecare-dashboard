@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026-10-23 — Theme system + live vitals header
+- design: 4 switchable themes on CSS variables (Ice = default Cleanroom, Aurora, Pearl, Lagoon), each with
+  light + dark. Header palette button (src/ThemePicker.jsx) switches theme and has a "Motion" calm-mode switch.
+  Engine: src/theme.js (data-theme / data-motion on <html>, saved per browser, ?theme=aurora works for previews).
+- design: live header motion (src/HeaderFX.jsx + CSS in index.css): ECG scan-head comet, logo lub-dub heartbeat
+  with ripples, ion bubbles, dental sparkles, clinic-name shine, flowing header gradient, live-signal blink,
+  search-bar breathing glow.
+- design: cursor-follow glass spotlight on cards, staggered entrance animation, stat count-up (src/CountUp.jsx),
+  shimmer primary buttons, chart glow. All motion respects prefers-reduced-motion and the Motion switch.
+- fix: `Dashboard` is now a named export of App.jsx, so src/preview-main.jsx (design preview harness) works again.
+- To add a theme: copy a html[data-theme="…"] block in src/index.css, change the RGB numbers, add one line to
+  THEMES in src/theme.js.
+
+## 2026-10-21 — Patient age + "Cleanroom" theme
+- feat(age): patient age is now captured with the other booking details. Dashboard walk-in /
+  waitlist-convert form has a required Age field (whole number 0-120; locked on reschedule).
+  Age shows on booking cards, in the Patients tab, and in both CSV exports.
+  DB columns: `booking_records.patient_age` and `patients.age` (nullable, CHECK 0-120), see
+  `supabase/migrations/20261021164713_add_patient_age.sql` (already applied to the live project).
+  The dashboard reads/writes `patient_age` on bookings. n8n Booking Engine, Update Booking Engine
+  and the AI receptionist prompt collect and save it too.
+- fix: walk-in insert never saved `price` to the database; it does now.
+- design: new "Cleanroom" theme. All stone/teal Tailwind shades are CSS variables in
+  `src/index.css` (light = ice-white glass, dark = night ward), so the whole app re-themes from
+  one file. Dark mode now covers every component (the old `dark:` variants were removed).
+  Fonts: Sora (headings, numbers) + Figtree (UI), loaded from Google Fonts in `index.html`.
+  Signature: instrument-style header with a slow vitals trace (disabled for reduced motion).
+
 ## 2026-08-08 — Reminder-resend webhook
 - feat(n8n): created and activated "Resend Reminder (Dashboard Webhook)" — the URL the dashboard's
   Alerts tab needs for `reminder_resend_webhook_url`. Looks up the patient's next upcoming

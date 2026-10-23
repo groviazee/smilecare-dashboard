@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import ErrorBoundary from "./ErrorBoundary.jsx";
+import ThemePicker from "./ThemePicker.jsx";
+import CountUp from "./CountUp.jsx";
+import { HeaderFX, LogoBeat } from "./HeaderFX.jsx";
 import {
   Search, ChevronLeft, ChevronRight, Phone, MessageCircle, Check, X,
   AlertTriangle, AlertOctagon, Info, Star, Settings as SettingsIcon, Users,
@@ -81,27 +84,27 @@ function buildDemoData() {
   ];
 
   const bookings = [
-    { booking_id: "BK-DEMO01", patient_name: "Priya Sharma", patient_phone: "+919876500001", reason_for_visit: "Cleaning", dentist_name: "Dr. Sharma", appointment_start: fromToday(0, 9, 30), appointment_end: fromToday(0, 10, 0), status: "arrived", price: 1500 },
-    { booking_id: "BK-DEMO02", patient_name: "Rohit Verma", patient_phone: "+919876500002", reason_for_visit: "Root canal consult", dentist_name: "Dr. Mehta", appointment_start: fromToday(0, 10, 30), appointment_end: fromToday(0, 11, 30), status: "confirmed", price: 4500 },
-    { booking_id: "BK-DEMO03", patient_name: "Anjali Gupta", patient_phone: "+919876500003", reason_for_visit: "Check-up", dentist_name: "Dr. Kapoor", appointment_start: fromToday(0, 11, 0), appointment_end: fromToday(0, 11, 30), status: "no_show", price: 600 },
-    { booking_id: "BK-DEMO04", patient_name: "Karan Malhotra", patient_phone: "+919876500004", reason_for_visit: "Filling", dentist_name: "Dr. Sharma", appointment_start: fromToday(0, 15, 0), appointment_end: fromToday(0, 15, 30), status: "confirmed", price: 1800 },
-    { booking_id: "BK-DEMO05", patient_name: "Neha Joshi", patient_phone: "+919876500005", reason_for_visit: "Teeth whitening", dentist_name: "Dr. Mehta", appointment_start: fromToday(0, 16, 30), appointment_end: fromToday(0, 17, 30), status: "confirmed", price: 7000 },
-    { booking_id: "BK-DEMO06", patient_name: "Sameer Khan", patient_phone: "+919876500006", reason_for_visit: "Extraction", dentist_name: "Dr. Kapoor", appointment_start: fromToday(1, 9, 0), appointment_end: fromToday(1, 9, 45), status: "confirmed", price: 2500 },
-    { booking_id: "BK-DEMO07", patient_name: "Divya Nair", patient_phone: "+919876500007", reason_for_visit: "Braces adjustment", dentist_name: "Dr. Mehta", appointment_start: fromToday(1, 14, 0), appointment_end: fromToday(1, 14, 30), status: "confirmed", price: 2000 },
-    { booking_id: "BK-DEMO08", patient_name: "Arjun Rao", patient_phone: "+919876500008", reason_for_visit: "Cleaning", dentist_name: "Dr. Sharma", appointment_start: fromToday(2, 10, 0), appointment_end: fromToday(2, 10, 30), status: "confirmed", price: 1500 },
-    { booking_id: "BK-DEMO09", patient_name: "Priya Sharma", patient_phone: "+919876500001", reason_for_visit: "Filling", dentist_name: "Dr. Sharma", appointment_start: fromToday(-7, 9, 30), appointment_end: fromToday(-7, 10, 0), status: "completed", price: 1800 },
-    { booking_id: "BK-DEMO10", patient_name: "Priya Sharma", patient_phone: "+919876500001", reason_for_visit: "Check-up", dentist_name: "Dr. Sharma", appointment_start: fromToday(-14, 9, 30), appointment_end: fromToday(-14, 10, 0), status: "no_show", price: 600 },
-    { booking_id: "BK-DEMO11", patient_name: "Sameer Khan", patient_phone: "+919876500006", reason_for_visit: "Cleaning", dentist_name: "Dr. Kapoor", appointment_start: fromToday(-21, 9, 0), appointment_end: fromToday(-21, 9, 30), status: "no_show", price: 1500 },
-    { booking_id: "BK-DEMO12", patient_name: "Priya Sharma", patient_phone: "+919876500001", reason_for_visit: "Cleaning", dentist_name: "Dr. Sharma", appointment_start: fromToday(-195, 9, 30), appointment_end: fromToday(-195, 10, 0), status: "completed", price: 1500 },
+    { booking_id: "BK-DEMO01", patient_name: "Priya Sharma", patient_phone: "+919876500001", patient_age: 34, reason_for_visit: "Cleaning", dentist_name: "Dr. Sharma", appointment_start: fromToday(0, 9, 30), appointment_end: fromToday(0, 10, 0), status: "arrived", price: 1500 },
+    { booking_id: "BK-DEMO02", patient_name: "Rohit Verma", patient_phone: "+919876500002", patient_age: 41, reason_for_visit: "Root canal consult", dentist_name: "Dr. Mehta", appointment_start: fromToday(0, 10, 30), appointment_end: fromToday(0, 11, 30), status: "confirmed", price: 4500 },
+    { booking_id: "BK-DEMO03", patient_name: "Anjali Gupta", patient_phone: "+919876500003", patient_age: 29, reason_for_visit: "Check-up", dentist_name: "Dr. Kapoor", appointment_start: fromToday(0, 11, 0), appointment_end: fromToday(0, 11, 30), status: "no_show", price: 600 },
+    { booking_id: "BK-DEMO04", patient_name: "Karan Malhotra", patient_phone: "+919876500004", patient_age: 37, reason_for_visit: "Filling", dentist_name: "Dr. Sharma", appointment_start: fromToday(0, 15, 0), appointment_end: fromToday(0, 15, 30), status: "confirmed", price: 1800 },
+    { booking_id: "BK-DEMO05", patient_name: "Neha Joshi", patient_phone: "+919876500005", patient_age: 26, reason_for_visit: "Teeth whitening", dentist_name: "Dr. Mehta", appointment_start: fromToday(0, 16, 30), appointment_end: fromToday(0, 17, 30), status: "confirmed", price: 7000 },
+    { booking_id: "BK-DEMO06", patient_name: "Sameer Khan", patient_phone: "+919876500006", patient_age: 45, reason_for_visit: "Extraction", dentist_name: "Dr. Kapoor", appointment_start: fromToday(1, 9, 0), appointment_end: fromToday(1, 9, 45), status: "confirmed", price: 2500 },
+    { booking_id: "BK-DEMO07", patient_name: "Divya Nair", patient_phone: "+919876500007", patient_age: 22, reason_for_visit: "Braces adjustment", dentist_name: "Dr. Mehta", appointment_start: fromToday(1, 14, 0), appointment_end: fromToday(1, 14, 30), status: "confirmed", price: 2000 },
+    { booking_id: "BK-DEMO08", patient_name: "Arjun Rao", patient_phone: "+919876500008", patient_age: 52, reason_for_visit: "Cleaning", dentist_name: "Dr. Sharma", appointment_start: fromToday(2, 10, 0), appointment_end: fromToday(2, 10, 30), status: "confirmed", price: 1500 },
+    { booking_id: "BK-DEMO09", patient_name: "Priya Sharma", patient_phone: "+919876500001", patient_age: 34, reason_for_visit: "Filling", dentist_name: "Dr. Sharma", appointment_start: fromToday(-7, 9, 30), appointment_end: fromToday(-7, 10, 0), status: "completed", price: 1800 },
+    { booking_id: "BK-DEMO10", patient_name: "Priya Sharma", patient_phone: "+919876500001", patient_age: 34, reason_for_visit: "Check-up", dentist_name: "Dr. Sharma", appointment_start: fromToday(-14, 9, 30), appointment_end: fromToday(-14, 10, 0), status: "no_show", price: 600 },
+    { booking_id: "BK-DEMO11", patient_name: "Sameer Khan", patient_phone: "+919876500006", patient_age: 45, reason_for_visit: "Cleaning", dentist_name: "Dr. Kapoor", appointment_start: fromToday(-21, 9, 0), appointment_end: fromToday(-21, 9, 30), status: "no_show", price: 1500 },
+    { booking_id: "BK-DEMO12", patient_name: "Priya Sharma", patient_phone: "+919876500001", patient_age: 34, reason_for_visit: "Cleaning", dentist_name: "Dr. Sharma", appointment_start: fromToday(-195, 9, 30), appointment_end: fromToday(-195, 10, 0), status: "completed", price: 1500 },
   ];
 
   const patients = [
-    { phone: "+919876500001", name: "Priya Sharma", email: "priya.sharma@example.com", total_visits: 4, last_visit_date: fromToday(-7, 9, 30), staff_notes: "Prefers morning slots." },
-    { phone: "+919876500002", name: "Rohit Verma", email: "rohit.verma@example.com", total_visits: 1, last_visit_date: fromToday(0, 10, 30), staff_notes: "" },
-    { phone: "+919876500003", name: "Anjali Gupta", email: "anjali.gupta@example.com", total_visits: 2, last_visit_date: fromToday(0, 11, 0), staff_notes: "" },
-    { phone: "+919876500004", name: "Karan Malhotra", email: "karan.malhotra@example.com", total_visits: 3, last_visit_date: fromToday(0, 15, 0), staff_notes: "" },
-    { phone: "+919876500005", name: "Neha Joshi", email: "neha.joshi@example.com", total_visits: 1, last_visit_date: fromToday(0, 16, 30), staff_notes: "" },
-    { phone: "+919876500006", name: "Sameer Khan", email: "sameer.khan@example.com", total_visits: 5, last_visit_date: fromToday(1, 9, 0), staff_notes: "Two prior no-shows — call to confirm before visit." },
+    { phone: "+919876500001", name: "Priya Sharma", age: 34, email: "priya.sharma@example.com", total_visits: 4, last_visit_date: fromToday(-7, 9, 30), staff_notes: "Prefers morning slots." },
+    { phone: "+919876500002", name: "Rohit Verma", age: 41, email: "rohit.verma@example.com", total_visits: 1, last_visit_date: fromToday(0, 10, 30), staff_notes: "" },
+    { phone: "+919876500003", name: "Anjali Gupta", age: 29, email: "anjali.gupta@example.com", total_visits: 2, last_visit_date: fromToday(0, 11, 0), staff_notes: "" },
+    { phone: "+919876500004", name: "Karan Malhotra", age: 37, email: "karan.malhotra@example.com", total_visits: 3, last_visit_date: fromToday(0, 15, 0), staff_notes: "" },
+    { phone: "+919876500005", name: "Neha Joshi", age: 26, email: "neha.joshi@example.com", total_visits: 1, last_visit_date: fromToday(0, 16, 30), staff_notes: "" },
+    { phone: "+919876500006", name: "Sameer Khan", age: 45, email: "sameer.khan@example.com", total_visits: 5, last_visit_date: fromToday(1, 9, 0), staff_notes: "Two prior no-shows — call to confirm before visit." },
   ];
 
   const escalations = [
@@ -324,12 +327,12 @@ function SeverityBadge({ severity }) {
 }
 
 function Card({ children, className = "" }) {
-  return <div className={`bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm ${className}`}>{children}</div>;
+  return <div className={`glass bg-panel/80 rounded-2xl border border-stone-200/80 shadow-sm ${className}`}>{children}</div>;
 }
 
 function EmptyState({ icon: Icon, text }) {
   return (
-    <div className="flex flex-col items-center justify-center text-center py-10 text-stone-400 dark:text-stone-500">
+    <div className="flex flex-col items-center justify-center text-center py-10 text-stone-400">
       <Icon size={28} className="mb-2" />
       <p className="text-sm">{text}</p>
     </div>
@@ -419,8 +422,8 @@ function ConnectScreen({ onConnected }) {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 flex items-center justify-center px-4">
-      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6 w-full max-w-sm">
+    <div className="min-h-screen app-shell flex items-center justify-center px-4">
+      <div className="bg-panel rounded-2xl border border-stone-200 shadow-sm p-6 w-full max-w-sm">
         <div className="flex flex-col items-center text-center mb-4">
           <div className="w-11 h-11 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center mb-3">
             <Stethoscope size={20} />
@@ -462,8 +465,8 @@ function LoginScreen({ supabase, onChangeProject, configFromEnv }) {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 flex items-center justify-center px-4">
-      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6 w-full max-w-sm">
+    <div className="min-h-screen app-shell flex items-center justify-center px-4">
+      <div className="bg-panel rounded-2xl border border-stone-200 shadow-sm p-6 w-full max-w-sm">
         <div className="flex flex-col items-center text-center mb-4">
           <div className="w-11 h-11 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center mb-3">
             <Lock size={20} />
@@ -543,7 +546,7 @@ export default function App() {
 
 /* ============================== main dashboard ============================== */
 
-function Dashboard({ config, session, userEmail, onLogout, supabase }) {
+export function Dashboard({ config, session, userEmail, onLogout, supabase }) {
   const [tab, setTab] = useState("today");
   const [lastRefreshed, setLastRefreshed] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -1002,8 +1005,10 @@ function Dashboard({ config, session, userEmail, onLogout, supabase }) {
         await client.insert("booking_records", {
           booking_id: booking.booking_id, patient_phone: booking.patient_phone, patient_name: booking.patient_name,
           patient_email: booking.patient_email || null,
+          patient_age: booking.patient_age ?? null,
           reason_for_visit: booking.reason_for_visit, dentist_name: booking.dentist_name,
           appointment_start: booking.appointment_start, appointment_end: booking.appointment_end,
+          price: booking.price ?? null,
           status: booking.status, created_by: "staff_dashboard",
         });
       } catch (e) {
@@ -1107,8 +1112,8 @@ function Dashboard({ config, session, userEmail, onLogout, supabase }) {
 
   if (isUnprovisioned) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center p-6">
-        <div className="max-w-sm w-full bg-white rounded-xl shadow-sm p-6 text-center space-y-3">
+      <div className="min-h-screen app-shell flex items-center justify-center p-6">
+        <div className="max-w-sm w-full bg-panel rounded-xl shadow-sm p-6 text-center space-y-3">
           <div className="text-sm font-semibold text-stone-800">No access yet</div>
           <p className="text-sm text-stone-600">
             You're signed in as <span className="font-medium">{userEmail}</span>, but this account
@@ -1125,13 +1130,15 @@ function Dashboard({ config, session, userEmail, onLogout, supabase }) {
 
   return (
     <ErrorBoundary onError={handleCrash}>
-    <div className="min-h-screen bg-stone-50 dark:bg-stone-900 text-stone-900 dark:text-stone-100 flex flex-col">
+    <div className="min-h-screen app-shell text-stone-900 flex flex-col">
       <style>{`@media print { .no-print { display: none !important; } .print-area { padding: 0 !important; } }`}</style>
 
-      <header className="sticky top-0 z-20 bg-teal-800 dark:bg-stone-800 text-white px-4 py-3 no-print">
+      <header className="app-header sticky top-0 z-20 text-white px-4 py-3 no-print">
+        <div className="ecg-trace" aria-hidden="true" />
+        <HeaderFX />
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Stethoscope size={22} className="text-teal-200" />
+            <LogoBeat><Stethoscope size={22} className="text-teal-200" /></LogoBeat>
             <div>
               <h1 className="font-semibold text-sm leading-tight">{data.clinicSettings?.clinic_name || "Smile Care Dental"}</h1>
               <p className="text-[11px] text-teal-200 leading-tight">{userEmail || "Staff Dashboard"}</p>
@@ -1154,6 +1161,7 @@ function Dashboard({ config, session, userEmail, onLogout, supabase }) {
             <button onClick={refresh} className="p-1.5 rounded-lg hover:bg-teal-700" title="Refresh">
               <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
             </button>
+            <ThemePicker />
             <button onClick={() => setDarkMode((v) => !v)} className="p-1.5 rounded-lg hover:bg-teal-700" title={darkMode ? "Switch to light mode" : "Switch to dark mode"}>
               {darkMode ? <Sun size={16} /> : <Moon size={16} />}
             </button>
@@ -1179,7 +1187,7 @@ function Dashboard({ config, session, userEmail, onLogout, supabase }) {
         <nav className="hidden md:flex gap-1 mt-3">
           {visibleTabs.map((t) => (
             <button key={t.key} onClick={() => setTab(t.key)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition ${tab === t.key ? "bg-white text-teal-800" : "text-teal-100 hover:bg-teal-700"}`}>
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition ${tab === t.key ? "bg-panel text-teal-800" : "text-teal-100 hover:bg-teal-700"}`}>
               <t.icon size={15} />
               {t.label}
               {t.key === "alerts" && alertCount > 0 && <span className="ml-1 bg-red-500 text-white text-[10px] px-1.5 rounded-full">{alertCount}</span>}
@@ -1291,7 +1299,7 @@ function Dashboard({ config, session, userEmail, onLogout, supabase }) {
         </div>
       )}
 
-      <nav className="no-print md:hidden fixed bottom-0 inset-x-0 bg-white dark:bg-stone-800 border-t border-stone-200 dark:border-stone-700 flex justify-around py-1.5 z-20">
+      <nav className="no-print md:hidden fixed bottom-0 inset-x-0 glass bg-panel/85 border-t border-stone-200 flex justify-around py-1.5 z-20">
         {visibleTabs.map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)} className="relative flex flex-col items-center gap-0.5 px-2 py-1 min-w-[56px]">
             <t.icon size={20} className={tab === t.key ? "text-teal-700" : "text-stone-400"} />
@@ -1339,7 +1347,7 @@ function CommandPalette({ onClose, patients, bookings, onGoToTab, onOpenPatient,
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-start justify-center pt-20 z-40 no-print" onClick={onClose}>
-      <div className="bg-white w-full sm:w-[480px] mx-3 sm:mx-0 rounded-xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-panel w-full sm:w-[480px] mx-3 sm:mx-0 rounded-xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-2 px-3 py-2.5 border-b border-stone-100">
           <Search size={16} className="text-stone-400" />
           <input ref={inputRef} value={q} onChange={(e) => setQ(e.target.value)}
@@ -1393,7 +1401,7 @@ function ConversationModal({ phone, messages, onClose, settings }) {
   const locale = settings?.locale;
   return (
     <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-30 no-print">
-      <div className="bg-white w-full sm:w-[420px] sm:rounded-xl rounded-t-2xl p-4 max-h-[80vh] flex flex-col">
+      <div className="bg-panel w-full sm:w-[420px] sm:rounded-xl rounded-t-2xl p-4 max-h-[80vh] flex flex-col">
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-semibold text-sm flex items-center gap-1.5"><MessageSquare size={15} /> Conversation · {phone}</h3>
           <button onClick={onClose}><X size={18} /></button>
@@ -1433,7 +1441,7 @@ function TodayTab({ selectedDate, setSelectedDate, dentistFilter, setDentistFilt
   return (
     <div className="space-y-3">
       <div className="flex justify-end no-print">
-        <button onClick={() => window.print()} className="px-3 py-1.5 rounded-xl border border-stone-300 bg-white text-stone-600 hover:bg-stone-100 flex items-center gap-1.5 text-xs font-medium">
+        <button onClick={() => window.print()} className="px-3 py-1.5 rounded-xl border border-stone-300 bg-panel text-stone-600 hover:bg-stone-100 flex items-center gap-1.5 text-xs font-medium">
           <Printer size={15} /> Print
         </button>
       </div>
@@ -1461,7 +1469,7 @@ function TodayTab({ selectedDate, setSelectedDate, dentistFilter, setDentistFilt
       <div className="flex gap-1.5 overflow-x-auto no-print">
         {["all", ...dentistNames].map((d) => (
           <button key={d} onClick={() => setDentistFilter(d)}
-            className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium border ${dentistFilter === d ? "bg-teal-700 text-white border-teal-700" : "bg-white text-stone-600 border-stone-300"}`}>
+            className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium border ${dentistFilter === d ? "bg-teal-700 text-white border-teal-700" : "bg-panel text-stone-600 border-stone-300"}`}>
             {d === "all" ? "All dentists" : d}
           </button>
         ))}
@@ -1510,6 +1518,7 @@ function TodayTab({ selectedDate, setSelectedDate, dentistFilter, setDentistFilt
             onAddWalkIn({
               booking_id: `BK-WALK-${Date.now().toString(36).toUpperCase()}`,
               patient_name: fields.name, patient_phone: fields.phone, patient_email: fields.email?.trim() || null,
+              patient_age: String(fields.age ?? "").trim() === "" ? null : Number(fields.age),
               reason_for_visit: fields.reason, dentist_name: fields.dentist || "Any available",
               appointment_start: fields.start.toISOString(), appointment_end: fields.end.toISOString(), status: "confirmed",
               price: fields.price ? Number(fields.price) : (settings?.default_prices?.[fields.reason] ?? null),
@@ -1525,7 +1534,7 @@ function TodayTab({ selectedDate, setSelectedDate, dentistFilter, setDentistFilt
           existingBookings={allBookings} settings={settings} dentistNames={dentistNames}
           excludeBookingId={rescheduleTarget.booking_id}
           initial={{
-            name: rescheduleTarget.patient_name, phone: rescheduleTarget.patient_phone, email: rescheduleTarget.patient_email || "", reason: rescheduleTarget.reason_for_visit,
+            name: rescheduleTarget.patient_name, phone: rescheduleTarget.patient_phone, age: rescheduleTarget.patient_age ?? "", email: rescheduleTarget.patient_email || "", reason: rescheduleTarget.reason_for_visit,
             date: dateKey(new Date(rescheduleTarget.appointment_start)), time: fmtTime24(rescheduleTarget.appointment_start),
             duration: String(Math.round((new Date(rescheduleTarget.appointment_end) - new Date(rescheduleTarget.appointment_start)) / 60000)),
             dentist: rescheduleTarget.dentist_name,
@@ -1550,6 +1559,7 @@ function TodayTab({ selectedDate, setSelectedDate, dentistFilter, setDentistFilt
             onAddWalkIn({
               booking_id: `BK-WAIT-${Date.now().toString(36).toUpperCase()}`,
               patient_name: fields.name, patient_phone: fields.phone, patient_email: fields.email?.trim() || null,
+              patient_age: String(fields.age ?? "").trim() === "" ? null : Number(fields.age),
               reason_for_visit: fields.reason, dentist_name: fields.dentist || "Any available",
               appointment_start: fields.start.toISOString(), appointment_end: fields.end.toISOString(), status: "confirmed",
               price: fields.price ? Number(fields.price) : (settings?.default_prices?.[fields.reason] ?? null),
@@ -1607,7 +1617,7 @@ function BookingCard({ booking: b, onStatus, onReschedule, onCancel, onViewConve
           )}
           <div>
             <p className="text-sm font-semibold">{fmtTime(b.appointment_start, locale)} – {fmtTime(b.appointment_end, locale)}</p>
-            <p className="text-sm text-stone-800">{b.patient_name}</p>
+            <p className="text-sm text-stone-800">{b.patient_name}{b.patient_age != null && <span className="text-xs text-stone-500 font-normal"> · {b.patient_age} yrs</span>}</p>
             <p className="text-xs text-stone-500">{b.reason_for_visit} · {b.dentist_name}</p>
             <p className="text-[11px] text-stone-400 mt-0.5">{b.booking_id}</p>
           </div>
@@ -1672,13 +1682,17 @@ function BookingCard({ booking: b, onStatus, onReschedule, onCancel, onViewConve
 }
 
 function BookingFormModal({ title, onClose, onSave, existingBookings, initial, excludeBookingId, lockPatient, settings, dentistNames, onWaitlist }) {
-  const [form, setForm] = useState({ name: "", phone: "", email: "", reason: "", ...initial });
+  const [form, setForm] = useState({ name: "", phone: "", age: "", email: "", reason: "", ...initial });
   const [error, setError] = useState("");
   const [conflictFields, setConflictFields] = useState(null); // form snapshot when the slot is taken, so "Add to waitlist" can offer it
   const sharedCalendar = settings?.shared_calendar !== false;
 
   function submit() {
     if (!form.name.trim() || !form.phone.trim() || !form.reason.trim()) { setError("Name, phone, and reason are required."); return; }
+    if (!lockPatient) {
+      const ageNum = Number(form.age);
+      if (String(form.age).trim() === "" || !Number.isInteger(ageNum) || ageNum < 0 || ageNum > 120) { setError("Age is required — enter a whole number from 0 to 120."); return; }
+    }
     const email = form.email.trim();
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError("That email address doesn't look right — fix it or leave it blank."); return; }
     const result = validateSlot(form.date, form.time, Number(form.duration), settings);
@@ -1703,7 +1717,7 @@ function BookingFormModal({ title, onClose, onSave, existingBookings, initial, e
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-30 no-print">
-      <div className="bg-white w-full sm:w-96 sm:rounded-xl rounded-t-2xl p-4 space-y-3">
+      <div className="bg-panel w-full sm:w-96 sm:rounded-xl rounded-t-2xl p-4 space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-sm">{title}</h3>
           <button onClick={onClose}><X size={18} /></button>
@@ -1724,7 +1738,10 @@ function BookingFormModal({ title, onClose, onSave, existingBookings, initial, e
           </p>
         )}
         <input placeholder="Patient name" value={form.name} disabled={lockPatient} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm disabled:bg-stone-50 disabled:text-stone-500" />
-        <input placeholder="Mobile number" value={form.phone} disabled={lockPatient} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm disabled:bg-stone-50 disabled:text-stone-500" />
+        <div className="grid grid-cols-[1fr_5.5rem] gap-2">
+          <input placeholder="Mobile number" value={form.phone} disabled={lockPatient} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm disabled:bg-stone-50 disabled:text-stone-500" />
+          <input type="number" inputMode="numeric" min="0" max="120" step="1" placeholder="Age" aria-label="Patient age in years" value={form.age ?? ""} disabled={lockPatient} onChange={(e) => setForm({ ...form, age: e.target.value })} className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm disabled:bg-stone-50 disabled:text-stone-500" />
+        </div>
         <div className="relative">
           <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
           <input type="email" placeholder="Email address (optional)" value={form.email} disabled={lockPatient} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full border border-stone-300 rounded-lg pl-8 pr-3 py-2 text-sm disabled:bg-stone-50 disabled:text-stone-500" />
@@ -1787,8 +1804,8 @@ function PatientsTab({ patients, bookings, escalations, reviewTracking, expanded
   const recallCount = patients.filter(isRecallDue).length;
 
   function exportPatientsCSV() {
-    const rows = [["Name", "Phone", "Email", "Total visits", "Last visit", "Recall due", "Staff notes"]];
-    patients.forEach((p) => rows.push([p.name, p.phone, p.email || "", p.total_visits ?? "", p.last_visit_date || "", isRecallDue(p) ? "Yes" : "No", (p.staff_notes || "").replace(/\n/g, " ")]));
+    const rows = [["Name", "Phone", "Age", "Email", "Total visits", "Last visit", "Recall due", "Staff notes"]];
+    patients.forEach((p) => rows.push([p.name, p.phone, p.age ?? "", p.email || "", p.total_visits ?? "", p.last_visit_date || "", isRecallDue(p) ? "Yes" : "No", (p.staff_notes || "").replace(/\n/g, " ")]));
     const csv = rows.map((r) => r.map((c) => `"${String(c ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -1812,10 +1829,10 @@ function PatientsTab({ patients, bookings, escalations, reviewTracking, expanded
       </div>
       <div className="flex items-center gap-2">
         <button onClick={() => setRecallOnly((v) => !v)}
-          className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border whitespace-nowrap ${recallOnly ? "bg-amber-100 text-amber-800 border-amber-300" : "bg-white text-stone-600 border-stone-300"}`}>
+          className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border whitespace-nowrap ${recallOnly ? "bg-amber-100 text-amber-800 border-amber-300" : "bg-panel text-stone-600 border-stone-300"}`}>
           <CalendarClock size={13} /> Recall due{recallCount > 0 && ` (${recallCount})`}
         </button>
-        <button onClick={exportPatientsCSV} className="ml-auto flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border border-stone-300 bg-white text-stone-600 whitespace-nowrap">
+        <button onClick={exportPatientsCSV} className="ml-auto flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border border-stone-300 bg-panel text-stone-600 whitespace-nowrap">
           <Download size={13} /> Export CSV
         </button>
       </div>
@@ -1835,7 +1852,7 @@ function PatientsTab({ patients, bookings, escalations, reviewTracking, expanded
                       {p.name}
                       {dueForRecall && <span className="text-[10px] font-medium bg-amber-100 text-amber-700 border border-amber-300 rounded-full px-1.5 py-0.5">Recall due</span>}
                     </p>
-                    <p className="text-xs text-stone-500">{p.phone} · {p.total_visits} visits · last {fmtDateShort(p.last_visit_date, locale)}</p>
+                    <p className="text-xs text-stone-500">{p.phone}{p.age != null ? ` · ${p.age} yrs` : ""} · {p.total_visits} visits · last {fmtDateShort(p.last_visit_date, locale)}</p>
                     {pattern.noShows > 0 && <p className="text-[11px] text-red-600 mt-0.5">{pattern.noShows} no-shows in last {pattern.of} visits</p>}
                   </div>
                 </div>
@@ -2112,10 +2129,10 @@ function ReviewsTab({ reviewTracking, resolveComplaint, settings }) {
         <div style={{ width: "100%", height: 160 }}>
           <ResponsiveContainer>
             <BarChart data={dist}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(120,160,172,0.28)" />
               <XAxis dataKey="star" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
               <YAxis allowDecimals={false} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} width={24} />
-              <Tooltip /><Bar dataKey="count" fill="#0f766e" radius={[4, 4, 0, 0]} />
+              <Tooltip /><Bar dataKey="count" fill="#14b8b0" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -2227,8 +2244,8 @@ function ReportsTab({ bookings, escalations, aiCostTracking, settings, dentists 
   }, [aiCostTracking, settings]);
 
   function exportCSV() {
-    const rows = [["Booking ID", "Patient", "Phone", "Reason", "Dentist", "Start", "End", "Status"]];
-    todays.forEach((b) => rows.push([b.booking_id, b.patient_name, b.patient_phone, b.reason_for_visit, b.dentist_name, b.appointment_start, b.appointment_end, b.status]));
+    const rows = [["Booking ID", "Patient", "Age", "Phone", "Reason", "Dentist", "Start", "End", "Status"]];
+    todays.forEach((b) => rows.push([b.booking_id, b.patient_name, b.patient_age ?? "", b.patient_phone, b.reason_for_visit, b.dentist_name, b.appointment_start, b.appointment_end, b.status]));
     const csv = rows.map((r) => r.map((c) => `"${String(c ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -2239,8 +2256,8 @@ function ReportsTab({ bookings, escalations, aiCostTracking, settings, dentists 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between no-print">
-        <h2 className="text-sm font-semibold text-stone-700 dark:text-stone-200">Reports</h2>
-        <button onClick={() => window.print()} className="flex items-center gap-1 text-xs text-teal-700 dark:text-teal-400 font-medium border border-stone-300 dark:border-stone-600 rounded-full px-3 py-1.5">
+        <h2 className="text-sm font-semibold text-stone-700">Reports</h2>
+        <button onClick={() => window.print()} className="flex items-center gap-1 text-xs text-teal-700 font-medium border border-stone-300 rounded-full px-3 py-1.5">
           <FileDown size={13} /> Save as PDF
         </button>
       </div>
@@ -2275,10 +2292,10 @@ function ReportsTab({ bookings, escalations, aiCostTracking, settings, dentists 
           <div style={{ width: "100%", height: 140 }} className="mt-3">
             <ResponsiveContainer>
               <BarChart data={revenueByDentist} layout="vertical" margin={{ left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e7e5e4" />
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(120,160,172,0.28)" />
                 <XAxis type="number" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
                 <YAxis type="category" dataKey="dentist" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} width={70} />
-                <Tooltip formatter={(v) => [`${currencySymbol}${v}`, "Revenue (month)"]} /><Bar dataKey="revenue" fill="#0f766e" radius={[0, 4, 4, 0]} />
+                <Tooltip formatter={(v) => [`${currencySymbol}${v}`, "Revenue (month)"]} /><Bar dataKey="revenue" fill="#14b8b0" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -2294,10 +2311,10 @@ function ReportsTab({ bookings, escalations, aiCostTracking, settings, dentists 
         <div style={{ width: "100%", height: 160 }}>
           <ResponsiveContainer>
             <BarChart data={funnelStages}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(120,160,172,0.28)" />
               <XAxis dataKey="stage" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} interval={0} />
               <YAxis allowDecimals={false} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} width={24} />
-              <Tooltip /><Bar dataKey="count" fill="#0f766e" radius={[4, 4, 0, 0]} />
+              <Tooltip /><Bar dataKey="count" fill="#14b8b0" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -2324,10 +2341,10 @@ function ReportsTab({ bookings, escalations, aiCostTracking, settings, dentists 
         <div style={{ width: "100%", height: 140 }}>
           <ResponsiveContainer>
             <BarChart data={costTrend}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(120,160,172,0.28)" />
               <XAxis dataKey="day" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} interval={2} />
               <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} width={36} />
-              <Tooltip formatter={(v) => [`$${v}`, "Cost"]} /><Bar dataKey="cost" fill="#0f766e" radius={[3, 3, 0, 0]} />
+              <Tooltip formatter={(v) => [`$${v}`, "Cost"]} /><Bar dataKey="cost" fill="#14b8b0" radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -2340,10 +2357,10 @@ function ReportsTab({ bookings, escalations, aiCostTracking, settings, dentists 
         <div style={{ width: "100%", height: 180 }}>
           <ResponsiveContainer>
             <BarChart data={statusBreakdown}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(120,160,172,0.28)" />
               <XAxis dataKey="status" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis allowDecimals={false} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} width={24} />
-              <Tooltip /><Bar dataKey="count" fill="#0f766e" radius={[4, 4, 0, 0]} />
+              <Tooltip /><Bar dataKey="count" fill="#14b8b0" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -2353,7 +2370,13 @@ function ReportsTab({ bookings, escalations, aiCostTracking, settings, dentists 
 }
 
 function StatCard({ label, value }) {
-  return <Card className="p-4"><p className="text-xl font-bold text-teal-800 dark:text-teal-400">{value}</p><p className="text-xs text-stone-500 dark:text-stone-400 mt-1">{label}</p></Card>;
+  return (
+    <Card className="p-4 relative overflow-hidden">
+      <span className="absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-teal-400 to-transparent opacity-80" aria-hidden="true" />
+      <p className="font-display text-2xl font-semibold tracking-tight text-teal-800"><CountUp value={value} /></p>
+      <p className="text-xs text-stone-500 mt-1">{label}</p>
+    </Card>
+  );
 }
 
 /* ============================== Settings Tab ============================== */
@@ -2449,7 +2472,7 @@ function SettingsTab({ clinicSettings, saveClinicSettings, dentists, addDentist,
             <div className="flex gap-1.5 flex-wrap">
               {WEEKDAY_LABELS.map((label, day) => (
                 <button key={day} onClick={() => toggleClosedDay(day)}
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium border ${(configForm.closed_weekdays || []).includes(day) ? "bg-red-100 text-red-700 border-red-300" : "bg-white text-stone-500 border-stone-300"}`}>
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium border ${(configForm.closed_weekdays || []).includes(day) ? "bg-red-100 text-red-700 border-red-300" : "bg-panel text-stone-500 border-stone-300"}`}>
                   {label}
                 </button>
               ))}

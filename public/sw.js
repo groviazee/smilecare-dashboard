@@ -4,7 +4,7 @@
 // does NOT cache or intercept Supabase API/realtime calls — those must
 // always hit the network so staff never act on stale patient data.
 
-const CACHE_NAME = "smilecare-shell-v2";
+const CACHE_NAME = "smilecare-shell-v1";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

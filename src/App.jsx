@@ -1071,10 +1071,13 @@ export function Dashboard({ config, session, userEmail, onLogout, supabase }) {
   useEffect(() => {
     if (!conversationPhone) return;
     if (!client) {
-      setConversationMessages(data.conversationLogs.filter((c) => c.patient_phone === conversationPhone).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)));
+      const _digits = (v) => String(v || "").replace(/\D/g, "");
+      setConversationMessages(data.conversationLogs.filter((c) => _digits(c.patient_phone) === _digits(conversationPhone)).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)));
       return;
     }
-    client.select("conversation_logs", `patient_phone=eq.${encodeURIComponent(conversationPhone)}&order=timestamp.asc&limit=100`)
+    // n8n logs phones without "+" (919...), bookings/patients store them with "+" (+919...) — match both.
+    const _d = String(conversationPhone).replace(/\D/g, "");
+    client.select("conversation_logs", `patient_phone=in.(${encodeURIComponent("+" + _d)},${encodeURIComponent(_d)})&order=timestamp.asc&limit=100`)
       .then(setConversationMessages)
       .catch((e) => setConnectError(e.message));
   }, [conversationPhone, client]); // eslint-disable-line
